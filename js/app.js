@@ -11,13 +11,15 @@ const albumsList    = document.getElementById("albums-list");
 
 // Render users in left panel — each user is a <button> (action, not navigation)
 function renderUsers(users) {
-    usersList.innerHTML = users.map(u =>
-        `<li>
-            <button class="user-btn" data-id="${u.id}">${u.name}</button>
-        </li>`
-    ).join("");
+    usersList.innerHTML = ""; // Clear safely
 
-    usersList.querySelectorAll(".user-btn").forEach(btn => {
+    users.forEach(u => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.className = "user-btn";
+        btn.dataset.id = u.id;
+        btn.textContent = u.name; // SAFE: uses textContent to prevent XSS
+
         btn.addEventListener("click", () => {
             const selectedId = Number(btn.dataset.id);
             console.log("Selected user ID:", selectedId);
@@ -29,6 +31,9 @@ function renderUsers(users) {
             const user = users.find(u => u.id === selectedId);
             showUserDetail(user);
         });
+
+        li.appendChild(btn);
+        usersList.appendChild(li);
     });
 }
 
@@ -56,18 +61,30 @@ async function showUserDetail(user) {
 
         // 2. Success / Empty States (Posts)
         document.getElementById("posts-heading").textContent = `Posts: ${posts.length}`;
+        postsList.innerHTML = ""; // Clear the loading state
         if (posts.length === 0) {
             postsList.innerHTML = "<li class='state-msg empty'>No posts found.</li>";
         } else {
-            postsList.innerHTML = posts.map(p => `<li class="detail-card">${p.title}</li>`).join("");
+            posts.forEach(p => {
+                const li = document.createElement("li");
+                li.className = "detail-card";
+                li.textContent = p.title; // SAFE DOM API
+                postsList.appendChild(li);
+            });
         }
 
         // 3. Success / Empty States (Albums)
         document.getElementById("albums-heading").textContent = `Albums: ${albums.length}`;
+        albumsList.innerHTML = ""; // Clear the loading state
         if (albums.length === 0) {
             albumsList.innerHTML = "<li class='state-msg empty'>No albums found.</li>";
         } else {
-            albumsList.innerHTML = albums.map(a => `<li class="detail-card">${a.title}</li>`).join("");
+            albums.forEach(a => {
+                const li = document.createElement("li");
+                li.className = "detail-card";
+                li.textContent = a.title; // SAFE DOM API
+                albumsList.appendChild(li);
+            });
         }
 
     } catch (err) {
