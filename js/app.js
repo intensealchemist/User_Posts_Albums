@@ -41,18 +41,57 @@ async function showUserDetail(user) {
     emptyState.hidden    = true;
     detailContent.hidden = false;
 
-    postsList.innerHTML  = "Loading...";
-    albumsList.innerHTML = "Loading...";
+    // 1. Loading State
+    document.getElementById("posts-heading").textContent  = "Posts";
+    document.getElementById("albums-heading").textContent = "Albums";
+    postsList.innerHTML  = "<li class='state-msg loading'>Loading posts...</li>";
+    albumsList.innerHTML = "<li class='state-msg loading'>Loading albums...</li>";
 
-    // Fetch posts and albums concurrently since they are independent requests
-    const [posts, albums] = await Promise.all([
-        getUserPosts(user.id),
-        getUserAlbums(user.id)
-    ]);
+    try {
+        // Fetch posts and albums concurrently since they are independent requests
+        const [posts, albums] = await Promise.all([
+            getUserPosts(user.id),
+            getUserAlbums(user.id)
+        ]);
 
-    postsList.innerHTML  = posts.map(p  => `<li class="detail-card">${p.title}</li>`).join("");
-    albumsList.innerHTML = albums.map(a => `<li class="detail-card">${a.title}</li>`).join("");
+        // 2. Success / Empty States (Posts)
+        document.getElementById("posts-heading").textContent = `Posts: ${posts.length}`;
+        if (posts.length === 0) {
+            postsList.innerHTML = "<li class='state-msg empty'>No posts found.</li>";
+        } else {
+            postsList.innerHTML = posts.map(p => `<li class="detail-card">${p.title}</li>`).join("");
+        }
+
+        // 3. Success / Empty States (Albums)
+        document.getElementById("albums-heading").textContent = `Albums: ${albums.length}`;
+        if (albums.length === 0) {
+            albumsList.innerHTML = "<li class='state-msg empty'>No albums found.</li>";
+        } else {
+            albumsList.innerHTML = albums.map(a => `<li class="detail-card">${a.title}</li>`).join("");
+        }
+
+    } catch (err) {
+        // 4. Error State
+        console.error("Failed to fetch user details:", err);
+        postsList.innerHTML  = "<li class='state-msg error'>Unable to load posts.</li>";
+        albumsList.innerHTML = "<li class='state-msg error'>Unable to load albums.</li>";
+    }
 }
 
-// Init
-getUsers().then(renderUsers);
+// Init: Also handle states for the initial users load
+async function init() {
+    usersList.innerHTML = "<li class='state-msg loading'>Loading users...</li>";
+    try {
+        const users = await getUsers();
+        if (users.length === 0) {
+            usersList.innerHTML = "<li class='state-msg empty'>No users found.</li>";
+        } else {
+            renderUsers(users);
+        }
+    } catch (err) {
+        console.error("Failed to fetch users:", err);
+        usersList.innerHTML = "<li class='state-msg error'>Unable to load user list.</li>";
+    }
+}
+
+init();
