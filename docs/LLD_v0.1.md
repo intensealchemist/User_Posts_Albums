@@ -12,91 +12,100 @@
 
 ## 1. Purpose
 
-This LLD translates the confirmed requirements into an implementation-level design for the User Posts & Albums Viewer. It defines the client-side modules, functions, UI structure, API interactions, data flow, state handling, and error-handling responsibilities to be implemented using HTML, CSS, JavaScript, and jQuery.
+This Low-Level Design translates the confirmed requirements into an implementation-level design for the User Posts & Albums Viewer. It defines the client-side project structure, functions, DOM structure, API interactions, state handling, event handling, loading/error behavior, and rendering responsibilities.
 
-The design assumes that JSONPlaceholder is the only data source and that there is no custom backend, database, authentication system, or persistent storage.
+The design is intentionally lightweight because the confirmed scope contains no custom backend, database, authentication, or persistent storage. JSONPlaceholder is the only external data source.
 
----
+## 2. Requirements Baseline
 
-## 2. Reference Requirements
+The LLD is based on the confirmed requirements recorded in RUD v1.1 and the corresponding HLD/SRS.
 
-The implementation shall support the following confirmed behavior:
+| ID | Confirmed requirement | LLD response |
+|---|---|---|
+| FR-01 | Retrieve users from JSONPlaceholder | `getUsers()` + `loadUsers()` |
+| FR-02 | Display first name + last name | `renderUsers()` uses the API `name` display value only |
+| FR-03 | Allow user selection | Selectable user controls + delegated click handling |
+| FR-04 | Retrieve selected user's posts | `getUserPosts(userId)` |
+| FR-05 | Retrieve selected user's albums | `getUserAlbums(userId)` |
+| FR-06 | Posts and Albums are separate | `activeView` + `renderPosts()` / `renderAlbums()`; one shared content area |
+| FR-07 | Loading feedback | Separate users/details loading elements and state flags |
+| FR-08 | User-facing API error handling | Separate users/details error elements and failure handlers |
+| FR-09 | Update without full page refresh | jQuery DOM updates after requests complete |
 
-- Retrieve users from the JSONPlaceholder `/users` endpoint.
-- Display each user using first name and last name only.
-- Allow the user to select/click a displayed user.
-- Retrieve posts and albums associated with the selected user ID.
-- Present Posts and Albums as separate views/options rather than one combined list/view.
-- Display loading feedback while API data is being retrieved.
-- Display an appropriate user-facing error message when an API request fails.
-- Update the displayed data without requiring a full-page refresh for each user selection.
+## 3. Scope and Design Boundaries
 
----
+### In scope
 
-## 3. Proposed Project Structure
+- Initial retrieval and rendering of the user list.
+- Display of each user's first and last name as the requested display name.
+- User selection.
+- Retrieval of both posts and albums for the selected user.
+- Separate Posts and Albums controls/views.
+- Loading, error, and empty states.
+- Client-side DOM rendering.
+- Basic responsive/presentable CSS.
 
-A small separation of concerns is recommended even though the application is client-side only.
+### Out of scope
+
+- Custom backend or server-side application code.
+- Custom database or persistence.
+- Authentication and authorization.
+- User registration/login.
+- CRUD operations against an application-owned data store.
+- Advanced UI/UX beyond the confirmed feature structure.
+
+## 4. Proposed Project Structure
 
 ```text
 user-posts-albums-viewer/
-│
-├── index.html
-├── css/
-│   └── style.css
-├── js/
-│   ├── api.js
-│   ├── ui.js
-│   └── app.js
-├── docs/
-│   ├── RUD_User_Posts_Albums_v1.1.pdf
-│   ├── SRS_User_Posts_Albums_v0.1.docx
-│   ├── API_Spec_User_Posts_Albums_v0.1.docx
-│   ├── HLD_User_Posts_Albums_v0.1.pdf
-│   └── LLD_User_Posts_Albums_v0.1.md
-└── README.md
+|
++- index.html
++- css/
+|  +- style.css
++- js/
+|  +- api.js
+|  +- ui.js
+|  +- app.js
++- docs/
+|  +- RUD_User_Posts_Albums_v1.1.pdf
+|  +- SRS_User_Posts_Albums_v0.1.pdf
+|  +- API_Spec_User_Posts_Albums_v0.1.pdf
+|  +- HLD_User_Posts_Albums_v0.1.pdf
+|  +- LLD_User_Posts_Albums_v0.1.md
++- README.md
 ```
 
-### Responsibility of each file
+### Responsibilities
 
 | File | Responsibility |
 |---|---|
-| `index.html` | Static page structure and UI containers |
-| `css/style.css` | Layout, visual styling, selected state, loading/error styling, responsive behavior |
-| `js/api.js` | JSONPlaceholder HTTP requests only |
-| `js/ui.js` | DOM rendering and UI state updates |
-| `js/app.js` | Application flow, event handling, orchestration, and state |
+| `index.html` | Static document structure and stable UI containers |
+| `css/style.css` | Layout, responsive behavior, selected state, loading/error/empty styling |
+| `js/api.js` | JSONPlaceholder request functions only |
+| `js/ui.js` | DOM rendering and UI state updates only |
+| `js/app.js` | State, event handling, orchestration, and request coordination |
 | `README.md` | Setup, usage, and project overview |
 
-The separation is intentionally lightweight. No framework, build system, backend, or state-management library is required by the current scope.
+The separation is deliberately small; no framework or additional state-management library is introduced.
 
----
+## 5. Runtime Flow
 
-## 4. High-Level Runtime Flow
+![Low-level runtime flow](lld_v0_2_assets/runtime.png)
 
-```mermaid
-flowchart TD
-    A[Document Ready] --> B[Load Users]
-    B --> C[GET /users]
-    C --> D[Store Users]
-    D --> E[Render First Name + Last Name]
-    E --> F[User Selects User]
-    F --> G[Store Selected User]
-    G --> H[Load Posts + Albums]
-    H --> I[GET /users/{id}/posts]
-    H --> J[GET /users/{id}/albums]
-    I --> K[Store Posts]
-    J --> L[Store Albums]
-    K --> M[Enable Posts/Albums Views]
-    L --> M
-    M --> N[User Selects Posts or Albums]
-    N --> O[Render Selected View]
-```
+The runtime sequence is:
 
----
+1. On document ready, `loadUsers()` starts the initial request.
+2. The client requests `GET /users`.
+3. Returned users are stored in memory and rendered using the `name` display value.
+4. The user selects a user control.
+5. The selected user is stored and previous user-specific data is cleared.
+6. Posts and Albums requests start concurrently.
+7. When both responses are available, the client stores both datasets and enables the separate view controls.
+8. The active view is rendered into a single content area.
 
-## 5. Client-Side State
+## 6. Client-Side State Model
 
-The application can maintain a small in-memory state object in `app.js`.
+The application keeps only session-local state in `app.js`.
 
 ```javascript
 const state = {
@@ -105,30 +114,32 @@ const state = {
     posts: [],
     albums: [],
     activeView: "posts",
-    loading: false,
-    error: null
+    usersLoading: false,
+    detailsLoading: false,
+    usersError: null,
+    detailsError: null,
+    detailRequestId: 0
 };
 ```
 
-### State fields
-
-| Field | Type | Purpose |
+| State field | Type | Responsibility |
 |---|---|---|
-| `users` | Array | Stores retrieved user records |
-| `selectedUser` | Object / null | Stores the currently selected user |
-| `posts` | Array | Stores posts for the selected user |
-| `albums` | Array | Stores albums for the selected user |
-| `activeView` | String | Indicates the visible content view: `posts` or `albums` |
-| `loading` | Boolean | Indicates an active user-specific API operation |
-| `error` | String / null | Stores the current user-facing error state |
+| `users` | Array | Retrieved user records |
+| `selectedUser` | Object / null | Current selected user |
+| `posts` | Array | Posts for the selected user |
+| `albums` | Array | Albums for the selected user |
+| `activeView` | String | `posts` or `albums` |
+| `usersLoading` | Boolean | Initial `/users` request state |
+| `detailsLoading` | Boolean | Selected-user request state |
+| `usersError` | String / null | Initial users error state |
+| `detailsError` | String / null | Selected-user error state |
+| `detailRequestId` | Number | Prevents stale responses from a previous selection from updating the current UI |
 
-The state exists only for the current page session. No persistence is required.
+`activeView` defaults to `posts` to match the sample UI state; the user can switch to `albums` after the selected user's detail data is available.
 
----
+## 7. HTML / DOM Structure
 
-## 6. HTML / DOM Structure
-
-The HTML should provide stable containers that jQuery can update dynamically.
+Stable containers are defined in HTML and updated through jQuery.
 
 ```html
 <body>
@@ -139,6 +150,8 @@ The HTML should provide stable containers that jQuery can update dynamically.
     <main>
         <section id="users-panel">
             <h2>Users</h2>
+            <div id="users-loading" hidden></div>
+            <div id="users-error" hidden></div>
             <div id="users-list"></div>
         </section>
 
@@ -158,33 +171,29 @@ The HTML should provide stable containers that jQuery can update dynamically.
 </body>
 ```
 
-### Main DOM responsibilities
-
 | Element | Responsibility |
 |---|---|
 | `#users-list` | Render selectable users |
+| `#users-loading` | Show initial user-list loading state |
+| `#users-error` | Show initial user-list error state |
 | `#selected-user` | Show selected user's first and last name |
 | `#posts-btn` | Activate Posts view |
 | `#albums-btn` | Activate Albums view |
-| `#loading-message` | Display loading feedback |
-| `#error-message` | Display error feedback |
-| `#content-area` | Display either Posts or Albums, but not both simultaneously |
+| `#loading-message` | Show selected-user loading state |
+| `#error-message` | Show selected-user error state |
+| `#content-area` | Display either Posts or Albums, never both together |
 
----
+## 8. API Layer (`api.js`)
 
-## 7. API Layer (`api.js`)
+`api.js` contains transport logic only. It must not modify the DOM.
 
-`api.js` shall contain HTTP communication functions and no presentation logic.
-
-### 7.1 Base URL
+### 8.1 Base URL
 
 ```javascript
 const API_BASE_URL = "https://jsonplaceholder.typicode.com";
 ```
 
-### 7.2 `getUsers()`
-
-**Purpose:** Retrieve all users.
+### 8.2 Retrieve users
 
 ```javascript
 function getUsers() {
@@ -196,11 +205,7 @@ function getUsers() {
 }
 ```
 
-**Returns:** jQuery `jqXHR`/Promise-like object resolving to an array of users.
-
-### 7.3 `getUserPosts(userId)`
-
-**Purpose:** Retrieve posts associated with the selected user.
+### 8.3 Retrieve posts
 
 ```javascript
 function getUserPosts(userId) {
@@ -212,9 +217,7 @@ function getUserPosts(userId) {
 }
 ```
 
-### 7.4 `getUserAlbums(userId)`
-
-**Purpose:** Retrieve albums associated with the selected user.
+### 8.4 Retrieve albums
 
 ```javascript
 function getUserAlbums(userId) {
@@ -228,15 +231,13 @@ function getUserAlbums(userId) {
 
 ### API-layer rule
 
-API functions should return data/results to the caller. They should not directly modify the DOM or display UI messages. This keeps transport concerns separate from presentation concerns.
+The API layer returns the result of the jQuery AJAX operation. UI rendering, loading messages, and error presentation are handled by `app.js` and `ui.js`.
 
----
+## 9. Application Logic (`app.js`)
 
-## 8. Application Logic (`app.js`)
+`app.js` owns state, event handling, request orchestration, and selection logic.
 
-`app.js` coordinates API calls, state transitions, user interaction, and rendering.
-
-### 8.1 Initialization
+### 9.1 Initialization
 
 ```javascript
 $(function () {
@@ -245,91 +246,119 @@ $(function () {
 });
 ```
 
-### 8.2 `loadUsers()`
+### 9.2 Initial user retrieval
 
-**Responsibility:** Initial application data retrieval.
-
-```text
-Document ready
-    ↓
-loadUsers()
-    ↓
-getUsers()
-    ↓
-Success → store users → renderUsers()
-    ↓
-Failure → showError()
-```
-
-### 8.3 `handleUserSelection(user)`
-
-**Responsibility:** Start the selected-user workflow.
-
-```text
-User selected
-    ↓
-selectedUser = user
-    ↓
-show selected user
-    ↓
-clear previous content/error
-    ↓
-showLoading()
-    ↓
-load posts + albums
-```
-
-### 8.4 `loadUserDetails(userId)`
-
-Posts and albums are independent resources. They should be requested concurrently.
+The initial request has its own loading and error state so the users area can communicate the request status independently of selected-user details.
 
 ```javascript
-function loadUserDetails(userId) {
-    state.loading = true;
+function loadUsers() {
+    state.usersLoading = true;
+    state.usersError = null;
+
+    showUsersLoading();
+    clearUsersError();
+
+    return getUsers()
+        .done(function (users) {
+            state.users = users;
+            renderUsers(state.users);
+        })
+        .fail(function () {
+            state.usersError = "Failed to fetch users.";
+            showUsersError(state.usersError);
+        })
+        .always(function () {
+            state.usersLoading = false;
+            hideUsersLoading();
+        });
+}
+```
+
+### 9.3 User selection
+
+```javascript
+function handleUserSelection(user) {
+    if (!user || !user.id) {
+        showError("Unable to identify the selected user.");
+        return;
+    }
+
+    state.selectedUser = user;
+    state.posts = [];
+    state.albums = [];
+    state.activeView = "posts";
+    state.detailsError = null;
+    state.detailRequestId += 1;
+
+    $("#selected-user").text(user.name);
+    clearContentArea();
+    clearError();
+
+    loadUserDetails(user.id, state.detailRequestId);
+}
+```
+
+### 9.4 Loading posts and albums
+
+The two resources are independent, so they are initiated concurrently with `$.when()`.
+
+```javascript
+function loadUserDetails(userId, requestId) {
+    state.detailsLoading = true;
     showLoading();
+    clearError();
+    setContentControlsEnabled(false);
 
     return $.when(
         getUserPosts(userId),
         getUserAlbums(userId)
     )
     .done(function (posts, albums) {
+        // Ignore a late response for a previous user selection.
+        if (requestId !== state.detailRequestId) {
+            return;
+        }
+
         state.posts = posts[0];
         state.albums = albums[0];
-        state.loading = false;
-        enableContentControls();
+        state.detailsError = null;
+
+        setContentControlsEnabled(true);
         renderActiveView();
     })
     .fail(function () {
-        state.loading = false;
-        showError("Failed to load user details.");
+        if (requestId !== state.detailRequestId) {
+            return;
+        }
+
+        state.detailsError = "Failed to load user details.";
+        clearContentArea();
+        showError(state.detailsError);
     })
     .always(function () {
-        hideLoading();
+        if (requestId === state.detailRequestId) {
+            state.detailsLoading = false;
+            hideLoading();
+        }
     });
 }
 ```
 
-`$.when()` is used here because the two requests are independent and can be in progress at the same time.
+The request ID prevents an earlier selection from overwriting the UI after the user has already selected another user.
 
-### 8.5 `handleViewChange(view)`
-
-**Responsibility:** Switch between Posts and Albums without re-requesting data already loaded for the selected user.
+### 9.5 View switching
 
 ```javascript
 function handleViewChange(view) {
+    if (state.detailsLoading || state.detailsError) {
+        return;
+    }
+
     state.activeView = view;
+    clearError();
     renderActiveView();
 }
 ```
-
-Expected values:
-
-```text
-"posts"
-"albums"
-```
-
-### 8.6 `renderActiveView()`
 
 ```javascript
 function renderActiveView() {
@@ -341,21 +370,13 @@ function renderActiveView() {
 }
 ```
 
-Only one content view is rendered into `#content-area` at a time.
+## 10. UI Rendering Layer (`ui.js`)
 
----
+`ui.js` performs DOM updates and contains no API transport logic.
 
-## 9. UI Rendering Layer (`ui.js`)
+### 10.1 Render users
 
-`ui.js` is responsible only for DOM updates.
-
-### 9.1 `renderUsers(users)`
-
-**Input:** Array of users.
-
-**Behavior:** Render first name + last name as selectable controls.
-
-Illustrative implementation:
+JSONPlaceholder exposes a single `name` field for each user. For this assignment, that full display value is treated as the required first-name + last-name presentation. No additional name-parsing rule is introduced.
 
 ```javascript
 function renderUsers(users) {
@@ -366,7 +387,7 @@ function renderUsers(users) {
         const $button = $("<button>", {
             type: "button",
             class: "user-item",
-            text: `${user.name.split(" ")[0]} ${user.name.split(" ").slice(1).join(" ")}`,
+            text: user.name,
             "data-user-id": user.id
         });
 
@@ -375,256 +396,229 @@ function renderUsers(users) {
 }
 ```
 
-Because the JSONPlaceholder `name` field is provided as a full display name, the implementation should treat it as the user's display name. If a strict first-name/last-name split is required beyond the current API representation, that behavior should be clarified before adding parsing rules.
+### 10.2 Render Posts
 
-### 9.2 `renderPosts(posts)`
-
-**Responsibility:** Replace the content area with the Posts view only.
-
-Each post should display its relevant title/body data.
-
-```text
-Content area
-    ↓
-Posts heading
-    ↓
-Post list
-    ├── Post title
-    │   Post body
-    ├── Post title
-    │   Post body
-    └── ...
-```
-
-Use text insertion for API-provided values rather than inserting API values as executable HTML.
-
-### 9.3 `renderAlbums(albums)`
-
-**Responsibility:** Replace the content area with the Albums view only.
-
-```text
-Content area
-    ↓
-Albums heading
-    ↓
-Album list
-    ├── Album title
-    ├── Album title
-    └── ...
-```
-
-### 9.4 Loading functions
+Posts replace the content area.
 
 ```javascript
+function renderPosts(posts) {
+    const $content = $("#content-area");
+    $content.empty();
+
+    const $heading = $("<h3>").text(`Posts: ${posts.length}`);
+    $content.append($heading);
+
+    if (posts.length === 0) {
+        $content.append($("<p>").text("No posts available for this user."));
+        return;
+    }
+
+    const $list = $("<ul>");
+
+    $.each(posts, function (_, post) {
+        const $item = $("<li>");
+        $("<strong>").text(post.title).appendTo($item);
+        $("<p>").text(post.body).appendTo($item);
+        $item.appendTo($list);
+    });
+
+    $content.append($list);
+}
+```
+
+### 10.3 Render Albums
+
+Albums replace the same content area; Posts are not simultaneously rendered.
+
+```javascript
+function renderAlbums(albums) {
+    const $content = $("#content-area");
+    $content.empty();
+
+    const $heading = $("<h3>").text(`Albums: ${albums.length}`);
+    $content.append($heading);
+
+    if (albums.length === 0) {
+        $content.append($("<p>").text("No albums available for this user."));
+        return;
+    }
+
+    const $list = $("<ul>");
+
+    $.each(albums, function (_, album) {
+        $("<li>")
+            .text(album.title)
+            .appendTo($list);
+    });
+
+    $content.append($list);
+}
+```
+
+### 10.4 Loading and error feedback
+
+```javascript
+function showUsersLoading() {
+    $("#users-loading")
+        .text("Loading users...")
+        .prop("hidden", false);
+}
+
+function hideUsersLoading() {
+    $("#users-loading").prop("hidden", true);
+}
+
 function showLoading() {
     $("#loading-message")
-        .text("Loading...")
+        .text("Loading posts and albums...")
         .prop("hidden", false);
 }
 
 function hideLoading() {
     $("#loading-message").prop("hidden", true);
 }
-```
 
-### 9.5 Error function
+function showUsersError(message) {
+    $("#users-error")
+        .text(message)
+        .prop("hidden", false);
+}
 
-```javascript
 function showError(message) {
     $("#error-message")
         .text(message)
         .prop("hidden", false);
 }
+
+function clearUsersError() {
+    $("#users-error").prop("hidden", true).empty();
+}
+
+function clearError() {
+    $("#error-message").prop("hidden", true).empty();
+}
+
+function clearContentArea() {
+    $("#content-area").empty();
+}
+
+function setContentControlsEnabled(enabled) {
+    $("#posts-btn, #albums-btn").prop("disabled", !enabled);
+}
 ```
 
-A separate `clearError()` function should hide the error before a new request starts.
+## 11. Event Handling
 
----
-
-## 10. Event Handling
-
-Events shall be bound in `app.js`.
-
-### User selection
-
-Because user controls are dynamically created, delegated event handling is appropriate:
+Because the user controls are created dynamically, delegated event handling is used on the stable `#users-list` container.
 
 ```javascript
-$("#users-list").on("click", ".user-item", function () {
-    const userId = Number($(this).data("user-id"));
-    const user = state.users.find(u => u.id === userId);
+function bindEvents() {
+    $("#users-list").on("click", ".user-item", function () {
+        const userId = Number($(this).data("user-id"));
+        const user = state.users.find(function (item) {
+            return item.id === userId;
+        });
 
-    handleUserSelection(user);
-});
+        handleUserSelection(user);
+    });
+
+    $("#posts-btn").on("click", function () {
+        handleViewChange("posts");
+    });
+
+    $("#albums-btn").on("click", function () {
+        handleViewChange("albums");
+    });
+}
 ```
 
-### Posts / Albums controls
-
-```javascript
-$("#posts-btn").on("click", function () {
-    handleViewChange("posts");
-});
-
-$("#albums-btn").on("click", function () {
-    handleViewChange("albums");
-});
-```
-
-### Event flow
+### Event sequence
 
 ```text
-User clicks user control
-        ↓
-Delegated click handler
-        ↓
-Read user ID
-        ↓
-Find user in state
-        ↓
-handleUserSelection(user)
-        ↓
-Load selected user's details
+User clicks user
+    -> delegated click handler
+    -> obtain user ID
+    -> find user in state
+    -> handleUserSelection(user)
+    -> request posts + albums
 ```
 
----
+## 12. Detailed User-Selection Sequence
 
-## 11. Detailed User-Selection Sequence
+![User-selection sequence](lld_v0_2_assets/sequence.png)
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant UI as jQuery UI
-    participant APP as Application Logic
-    participant API as JSONPlaceholder
+The key low-level behavior is that the selected user is updated immediately, the old content is cleared, and the two user-specific API requests run independently of each other.
 
-    U->>UI: Click user
-    UI->>APP: userId
-    APP->>UI: Show selected user + loading state
-    APP->>API: GET /users/{id}/posts
-    APP->>API: GET /users/{id}/albums
-    API-->>APP: Posts JSON
-    API-->>APP: Albums JSON
-    APP->>APP: Store posts and albums
-    APP->>UI: Enable Posts/Albums controls
-    UI-->>U: Show selected view
-```
+## 13. Posts / Albums View Logic
 
-The two API requests are independent and should not be modeled as a dependency on each other.
-
----
-
-## 12. Initial User-List Sequence
-
-```mermaid
-sequenceDiagram
-    participant B as Browser
-    participant APP as Application Logic
-    participant API as JSONPlaceholder
-    participant UI as UI Renderer
-
-    B->>APP: Document ready
-    APP->>API: GET /users
-    API-->>APP: Users JSON
-    APP->>APP: Store users
-    APP->>UI: renderUsers(users)
-    UI-->>B: User list displayed
-```
-
----
-
-## 13. Error Handling Design
-
-### Initial user request failure
+The selected-user panel contains two separate controls:
 
 ```text
-GET /users
-   ↓
-failure
-   ↓
-showError("Failed to fetch users.")
+[ Posts ]    [ Albums ]
 ```
 
-The user list remains empty or displays the error state.
+The content area is shared, but only one view is rendered at any time.
 
-### Selected-user request failure
-
-```text
-User selected
-   ↓
-showLoading()
-   ↓
-Posts/Albums request
-   ↓
-Failure
-   ↓
-hideLoading()
-   ↓
-showError("Failed to load user details.")
-```
-
-The application should not display stale data as if it belonged to the newly selected user.
-
-### HTTP success validation
-
-A successful HTTP request should be required before using the returned data. With jQuery AJAX, HTTP failures are routed through the failure callback.
-
----
-
-## 14. Loading-State Design
-
-Loading feedback is required for user-specific data retrieval and should be visible while requests are in progress.
-
-Expected state transition:
-
-```text
-Idle
- ↓
-Loading
- ↓
-Success → Display selected view
-
-Loading
- ↓
-Failure → Display error
-```
-
-The loading indicator should not remain visible after the request settles.
-
----
-
-## 15. Posts / Albums View Logic
-
-The UI shall maintain a single content area with two separate choices:
-
-```text
-[ Posts ]   [ Albums ]
-```
-
-### Posts selected
+### Posts view
 
 ```text
 activeView = "posts"
-       ↓
-renderPosts(state.posts)
+    -> renderPosts(state.posts)
 ```
 
-### Albums selected
+### Albums view
 
 ```text
 activeView = "albums"
-       ↓
-renderAlbums(state.albums)
+    -> renderAlbums(state.albums)
 ```
 
-Posts and Albums must not be rendered as one combined list or simultaneous content view.
+Switching views after the two datasets have been loaded does **not** create another API request. It only changes the rendered content.
 
-If both datasets have already been retrieved for the selected user, changing the active view should only update the content area and should not trigger another API request.
+## 14. Loading, Error, and Empty-State Handling
 
----
+### 14.1 Initial users loading
 
-## 16. Data Shapes Used by the UI
+```text
+Application start
+    -> Loading users...
+    -> GET /users
+       -> success -> render user list
+       -> failure -> show users error
+```
 
-Only fields required by the UI should be consumed.
+### 14.2 Selected-user loading
+
+```text
+User selected
+    -> clear old detail content
+    -> Loading posts and albums...
+    -> GET posts + GET albums
+       -> both succeed -> enable controls + render active view
+       -> failure -> hide loading + show error
+```
+
+### 14.3 Empty data
+
+A successful response with an empty array should not produce a blank content area. The renderer displays a clear message such as:
+
+```text
+No posts available for this user.
+```
+
+or:
+
+```text
+No albums available for this user.
+```
+
+### 14.4 Stale-response protection
+
+When the user selects another user before the previous requests finish, `detailRequestId` ensures that an older result is ignored. This prevents the previously selected user's posts or albums from being rendered under the newly selected user's name.
+
+## 15. Data Shapes Used by the UI
+
+Only fields required by the interface are consumed.
 
 ### User
 
@@ -632,11 +626,11 @@ Only fields required by the UI should be consumed.
 {
     id: 1,
     name: "Leanne Graham",
-    ...
+    // other API fields ignored by this UI
 }
 ```
 
-Relevant field:
+Used fields:
 
 ```text
 id
@@ -654,7 +648,7 @@ name
 }
 ```
 
-Relevant fields:
+Used fields:
 
 ```text
 id
@@ -672,208 +666,112 @@ body
 }
 ```
 
-Relevant fields:
+Used fields:
 
 ```text
 id
 title
 ```
 
----
+## 16. Request and Concurrency Behavior
 
-## 17. DOM Update Rules
-
-The renderer should follow these rules:
-
-1. Clear or replace the target container before rendering a fresh dataset.
-2. Use stable element IDs/classes for predictable targeting.
-3. Use `text()`/text nodes for API-provided text where possible.
-4. Do not duplicate user/post/album elements when the same rendering function is called again.
-5. Replace the content area when switching between Posts and Albums.
-6. Keep loading and error messages outside the main data list so they can be controlled independently.
-
-Example:
-
-```javascript
-$("#content-area").empty();
-```
-
-should be performed before rendering a new active view into that container.
-
----
-
-## 18. Concurrency and Request Behavior
-
-When a user is selected, Posts and Albums are independent resources. The implementation should therefore initiate the two requests without waiting for one to complete before starting the other.
+Posts and Albums are independent resources. The client therefore starts both requests without waiting for one request to complete before starting the other.
 
 ```text
-User selection
-      ↓
- ┌───────────────┬───────────────┐
- ↓               ↓
-Posts request    Albums request
- ↓               ↓
-Posts data       Albums data
- └───────┬───────┘
-         ↓
-   Store both datasets
-         ↓
-   Render selected view
+                 User selection
+                      |
+                      v
+              +----------------+
+              | Start requests |
+              +-------+--------+
+                      |
+              +-------+-------+
+              |               |
+              v               v
+          GET posts       GET albums
+              |               |
+              v               v
+          posts JSON      albums JSON
+              |               |
+              +-------+-------+
+                      |
+                      v
+                Store both sets
+                      |
+                      v
+                 Render view
 ```
 
-For this assignment, no caching beyond the currently selected user's in-memory data is required.
+The currently selected user's data is kept only in memory. No persistent cache is required.
 
----
+## 17. Security Considerations
 
-## 19. UI State Transitions
+- API-provided text is treated as untrusted input for rendering.
+- jQuery `.text()` is preferred for API-provided values rather than injecting raw HTML strings.
+- No API credentials, tokens, or authentication secrets are required for this assignment.
+- No authentication or authorization layer is included because it is outside the confirmed scope.
 
-```text
-APPLICATION START
-        |
-        v
-   LOADING USERS
-      /       \
-   success    failure
-     |           |
-     v           v
-USERS READY   ERROR STATE
-     |
-     v
-USER SELECTED
-     |
-     v
-LOADING DETAILS
-    /       \
- success    failure
-   |           |
-   v           v
-DETAILS      ERROR STATE
-READY
-   |
-   v
-POSTS / ALBUMS VIEW
-```
+## 18. Maintainability and Design Rules
 
----
+1. Keep API communication in `api.js`.
+2. Keep DOM rendering in `ui.js`.
+3. Keep state and workflow orchestration in `app.js`.
+4. Use stable IDs/classes for DOM targeting.
+5. Clear or replace the current content before rendering a new dataset.
+6. Use the selected user's ID to construct user-specific endpoint URLs.
+7. Do not combine Posts and Albums into one view.
+8. Avoid unnecessary abstraction because the assignment has a small scope.
 
-## 20. Validation Rules
+## 19. Requirement Traceability
 
-The client should perform basic checks before starting user-specific requests:
-
-- A selected user must exist.
-- A valid numeric user ID must be available.
-- The selected user name should be available for display.
-- Empty arrays should produce a meaningful empty state rather than an empty page.
-
-Example:
-
-```javascript
-if (!user || !user.id) {
-    showError("Unable to identify the selected user.");
-    return;
-}
-```
-
-No business-rule validation or user-entered form validation is currently required by the scope.
-
----
-
-## 21. Empty-State Handling
-
-The current requirements explicitly include loading and errors. Empty-state handling is included in the low-level design as defensive UI behavior.
-
-If a valid response contains no posts:
-
-```text
-No posts available for this user.
-```
-
-If a valid response contains no albums:
-
-```text
-No albums available for this user.
-```
-
-This avoids presenting a blank content area with no explanation.
-
----
-
-## 22. Browser-Side Security Considerations
-
-The application should not treat API-provided text as trusted HTML.
-
-Prefer:
-
-```javascript
-$("<li>").text(post.title);
-```
-
-over interpolating untrusted API values into HTML strings.
-
-No authentication secrets, API credentials, or private tokens are required for JSONPlaceholder in this assignment, so none should be embedded in the client code.
-
----
-
-## 23. Traceability to Requirements
-
-| SRS Requirement | LLD Implementation |
+| RUD/SRS requirement | LLD implementation |
 |---|---|
-| FR-01 Retrieve users | `getUsers()` + `loadUsers()` |
-| FR-02 Display users | `renderUsers()` using first and last name display |
-| FR-03 Select user | Delegated click handler + `handleUserSelection()` |
-| FR-04 Retrieve posts | `getUserPosts(userId)` |
-| FR-05 Retrieve albums | `getUserAlbums(userId)` |
-| FR-06 Separate Posts/Albums | `activeView` + `renderPosts()` / `renderAlbums()` |
-| FR-07 Loading state | `showLoading()` / `hideLoading()` |
-| FR-08 Error handling | `showError()` + AJAX failure handling |
-| FR-09 Dynamic update | DOM rendering without full-page refresh |
+| Retrieve users | `getUsers()` + `loadUsers()` |
+| Display first + last name | `renderUsers()` using `user.name` |
+| Select user | Delegated click handler + `handleUserSelection()` |
+| Retrieve posts | `getUserPosts(userId)` |
+| Retrieve albums | `getUserAlbums(userId)` |
+| Separate Posts/Albums | `activeView`, `renderPosts()`, `renderAlbums()` |
+| Loading feedback | `showUsersLoading()`, `showLoading()` and corresponding hide functions |
+| Error handling | Separate users/details error handlers |
+| Dynamic update | jQuery DOM updates without full page reload |
 
----
+## 20. Implementation Checklist
 
-## 24. Implementation Checklist
-
-Before considering the implementation complete, verify that:
-
-- [ ] `/users` is called successfully on initial load.
-- [ ] First name + last name are displayed for each user.
-- [ ] User selection identifies the correct user ID.
-- [ ] Posts are requested for the selected user.
-- [ ] Albums are requested for the selected user.
-- [ ] Posts and Albums are separate UI views.
-- [ ] Switching views does not combine both datasets.
-- [ ] Loading feedback appears during user-specific retrieval.
-- [ ] API failures produce a user-facing error.
-- [ ] Empty datasets produce an appropriate empty state.
-- [ ] Selecting another user replaces the previous user's data.
+- [ ] jQuery 4.0.0 is loaded.
+- [ ] `GET /users` works on document ready.
+- [ ] Users display first name + last name only.
+- [ ] User controls are selectable.
+- [ ] Selected user name is shown.
+- [ ] Posts and Albums requests use the selected user ID.
+- [ ] Posts and Albums requests can run concurrently.
+- [ ] Posts and Albums are separate views.
+- [ ] Switching views does not combine the two datasets.
+- [ ] Loading feedback is visible during retrieval.
+- [ ] Initial users errors are shown in the users area.
+- [ ] Selected-user errors are shown in the details area.
+- [ ] Empty arrays produce meaningful empty states.
+- [ ] Selecting another user replaces previous detail data.
+- [ ] Stale responses from older selections are ignored.
 - [ ] No full-page refresh is required for user selection.
-- [ ] No duplicate DOM items are created on re-render.
+- [ ] API-provided text is rendered safely.
 - [ ] No console errors remain during normal use.
 
----
+## 21. Design Decisions and HLD/LLD Boundary
 
-## 25. Design Decisions and Boundaries
+The following are intentionally low-level implementation decisions:
 
-The following decisions are intentionally kept at low-level implementation scope:
+- jQuery is used for AJAX, event handling, and DOM manipulation.
+- API functions are separated from UI rendering functions.
+- Posts and Albums are requested concurrently after user selection.
+- Both datasets are stored in memory for the current selection so view switching does not require another API request.
+- A request ID prevents stale responses from changing the UI after a new user is selected.
+- Posts and Albums use separate views in a shared content area.
 
-- jQuery is used for AJAX communication, event handling, and DOM operations.
-- API functions are separated from rendering functions.
-- User-specific Posts and Albums are requested concurrently.
-- The currently selected user's data is kept in memory for view switching.
-- Posts and Albums share one content area but are rendered separately.
-- No custom backend, database, authentication, or persistent cache is introduced.
+The HLD remains responsible for the major component architecture and system boundaries. Exact selectors, function names, state fields, and jQuery operations are intentionally kept in this LLD.
 
-Visual styling details remain in CSS and are not defined as low-level business logic.
+## 22. Document Status
 
----
+**LLD v0.1 - Draft**
 
-## 26. Open Implementation Note
-
-The confirmed requirement is that the user list display the user's **first name and last name**. JSONPlaceholder exposes a single `name` field for a user. The LLD therefore treats that API field as the display name rather than inventing a fixed parsing rule for all possible names. If the trainer expects a strict first-name/last-name parsing rule, that should be confirmed before implementation.
-
----
-
-## 27. Document Status
-
-**LLD v0.1 — Draft**
-
-This document is intended to serve as the implementation-level design baseline after the confirmed RUD/SRS. Any subsequent requirement changes should be reflected in the RUD/SRS first and then propagated into this LLD.
+This revision incorporates the confirmed RUD requirements, including first-name + last-name display, separate Posts and Albums views, loading/error states, and the client-side-only architecture. It also resolves low-level consistency issues in the earlier draft by separating initial/detail loading and error states, treating the API `name` field as the display name, and protecting against stale user-detail responses.
