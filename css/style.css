@@ -40,7 +40,7 @@ h1 { padding: 1rem; font-size: 1.4rem; }
 /* User list */
 .users-list li { list-style: none; }
 
-.user-btn {
+.user-item {
     display: block;
     width: 100%;
     padding: 0.5rem 0.75rem;
@@ -52,8 +52,8 @@ h1 { padding: 1rem; font-size: 1.4rem; }
     font-size: 1rem;
 }
 
-.user-btn:hover  { background: #e0e0e0; }
-.user-btn.active { background: #c8e6c9; font-weight: bold; }
+.user-item:hover  { background: #e0e0e0; }
+.user-item.active { background: #c8e6c9; font-weight: bold; }
 
 /* Detail cards */
 .detail-list { list-style: none; margin-top: 0.5rem; }
