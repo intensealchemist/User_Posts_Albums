@@ -63,32 +63,26 @@ const UI = {
         this.postsList.innerHTML = "<li class='state-msg error'>Unable to load posts.</li>";
         this.albumsList.innerHTML = "<li class='state-msg error'>Unable to load albums.</li>";
     },
-    renderPosts(posts) {
-        this.postsHeading.textContent = `Posts: ${posts.length}`;
-        this.postsList.innerHTML = "";
-        if (posts.length === 0) {
-            this.postsList.innerHTML = "<li class='state-msg empty'>No posts found.</li>";
+    // Helper method to eliminate redundant rendering logic
+    _renderDetailList(items, listEl, headingEl, label, emptyMsg) {
+        headingEl.textContent = `${label}: ${items.length}`;
+        listEl.innerHTML = "";
+        if (items.length === 0) {
+            listEl.innerHTML = `<li class='state-msg empty'>${emptyMsg}</li>`;
             return;
         }
-        posts.forEach(p => {
+        items.forEach(item => {
             const li = document.createElement("li");
             li.className = "detail-card";
-            li.textContent = p.title; // SAFE DOM API
-            this.postsList.appendChild(li);
+            li.textContent = item.title;
+            listEl.appendChild(li);
         });
     },
+
+    renderPosts(posts) {
+        this._renderDetailList(posts, this.postsList, this.postsHeading, "Posts", "No posts found.");
+    },
     renderAlbums(albums) {
-        this.albumsHeading.textContent = `Albums: ${albums.length}`;
-        this.albumsList.innerHTML = "";
-        if (albums.length === 0) {
-            this.albumsList.innerHTML = "<li class='state-msg empty'>No albums found.</li>";
-            return;
-        }
-        albums.forEach(a => {
-            const li = document.createElement("li");
-            li.className = "detail-card";
-            li.textContent = a.title; // SAFE DOM API
-            this.albumsList.appendChild(li);
-        });
+        this._renderDetailList(albums, this.albumsList, this.albumsHeading, "Albums", "No albums found.");
     }
 };
