@@ -9,19 +9,26 @@ const detailCompany = document.getElementById("detail-company");
 const postsList     = document.getElementById("posts-list");
 const albumsList    = document.getElementById("albums-list");
 
-// Render users in left panel
+// Render users in left panel — each user is a <button> (action, not navigation)
 function renderUsers(users) {
     usersList.innerHTML = users.map(u =>
-        `<li class="user-item" data-id="${u.id}">${u.name}</li>`
+        `<li>
+            <button class="user-btn" data-id="${u.id}">${u.name}</button>
+        </li>`
     ).join("");
 
-    usersList.addEventListener("click", e => {
-        const li = e.target.closest(".user-item");
-        if (!li) return;
-        document.querySelectorAll(".user-item").forEach(el => el.classList.remove("selected"));
-        li.classList.add("selected");
-        const user = users.find(u => u.id === Number(li.dataset.id));
-        showUserDetail(user);
+    usersList.querySelectorAll(".user-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const selectedId = Number(btn.dataset.id);
+            console.log("Selected user ID:", selectedId);
+
+            // Update active state
+            usersList.querySelectorAll(".user-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const user = users.find(u => u.id === selectedId);
+            showUserDetail(user);
+        });
     });
 }
 
