@@ -1,90 +1,77 @@
 // ============================================================
-//  User Posts & Albums Explorer — Step 1: Static UI
-//  Uses hardcoded mock data (no API calls yet)
+//  app.js — UI Module
+//  Handles all DOM rendering and user interaction.
+//  All data fetching is delegated to api.js.
 // ============================================================
-
-// ---------- Mock Data ----------
-
-const MOCK_USERS = [
-    { id: 1, name: "Leanne Graham",    username: "Bret",       email: "leanne@example.com",   company: "Romaguera-Crona" },
-    { id: 2, name: "Ervin Howell",     username: "Antonette",  email: "ervin@example.com",    company: "Deckow-Crist" },
-    { id: 3, name: "Clementine Bauch", username: "Samantha",   email: "clementine@example.com", company: "Romaguera-Jacobson" },
-    { id: 4, name: "Patricia Lebsack", username: "Karianne",   email: "patricia@example.com", company: "Robel-Corkery" },
-    { id: 5, name: "Chelsey Dietrich", username: "Kamren",     email: "chelsey@example.com",  company: "Keebler LLC" },
-    { id: 6, name: "Mrs. Dennis Schulist", username: "Leopoldo_Corkery", email: "dennis@example.com", company: "Considine-Lockman" },
-    { id: 7, name: "Kurtis Weissnat", username: "Elwyn.Skiles", email: "kurtis@example.com",  company: "Johns Group" },
-    { id: 8, name: "Nicholas Runolfsdottir V", username: "Maxime_Nienow", email: "nicholas@example.com", company: "Abernathy Group" },
-    { id: 9, name: "Glenna Reichert", username: "Delphine",   email: "glenna@example.com",   company: "Yost and Sons" },
-    { id: 10, name: "Clementina DuBuque", username: "Moriah.Stanton", email: "clementina@example.com", company: "Hoeger LLC" },
-];
-
-const MOCK_POSTS = {
-    1: [
-        { id: 1, title: "sunt aut facere repellat provident occaecati", body: "quia et suscipit suscipit recusandae consequuntur expedita et cum reprehenderit molestiae ut ut quas totam" },
-        { id: 2, title: "qui est esse",  body: "est rerum tempore vitae sequi sint nihil reprehenderit dolor beatae ea dolores neque" },
-        { id: 3, title: "ea molestias quasi exercitationem repellat", body: "et iusto sed quo iure voluptatem occaecati omnis eligendi aut ad" },
-    ],
-    2: [
-        { id: 11, title: "et ea vero quia laudantium autem", body: "delectus reiciendis molestiae occaecati non minima eveniet qui voluptatibus" },
-        { id: 12, title: "in quibusdam tempore odit est dolorem", body: "itaque id aut magnam praesentium quia et ea odit a sed" },
-    ],
-    3: [
-        { id: 21, title: "nesciunt quas odio", body: "repudiandae veniam quaerat sunt sed alias aut fugiat sit autem sed est" },
-        { id: 22, title: "dolorem eum magni eos aperiam quia", body: "ut aspernatur corporis harum nihil quis provident sequi mollitia nobis aliquid" },
-    ],
-};
-
-const MOCK_ALBUMS = {
-    1: [
-        { id: 1, title: "quidem molestiae enim" },
-        { id: 2, title: "sunt qui excepturi placeat culpa" },
-    ],
-    2: [
-        { id: 3, title: "omnis laborum odio" },
-        { id: 4, title: "non esse culpa molestiae omnis sed optio" },
-    ],
-    3: [
-        { id: 5, title: "eaque aut omnis a" },
-        { id: 6, title: "natus impedit quibusdam illo est" },
-    ],
-};
 
 // ---------- DOM References ----------
 
-const usersList      = document.getElementById("users-list");
-const emptyState     = document.getElementById("empty-state");
-const detailContent  = document.getElementById("detail-content");
-const detailName     = document.getElementById("detail-name");
-const detailEmail    = document.getElementById("detail-email");
-const detailCompany  = document.getElementById("detail-company");
-const postsList      = document.getElementById("posts-list");
-const albumsList     = document.getElementById("albums-list");
+const usersList     = document.getElementById("users-list");
+const emptyState    = document.getElementById("empty-state");
+const detailContent = document.getElementById("detail-content");
+const detailName    = document.getElementById("detail-name");
+const detailEmail   = document.getElementById("detail-email");
+const detailCompany = document.getElementById("detail-company");
+const postsList     = document.getElementById("posts-list");
+const albumsList    = document.getElementById("albums-list");
 
 // ---------- State ----------
 
 let selectedUserId = null;
 
-// ---------- Render Helpers ----------
+// ---------- UI Helpers ----------
 
 /**
- * Build the initials string from a full name (e.g. "Leanne Graham" → "LG").
+ * Returns a two-letter initials string from a full name.
+ * @param {string} name
+ * @returns {string}
  */
 function getInitials(name) {
     return name
         .split(" ")
-        .map((word) => word[0])
+        .map((w) => w[0])
         .join("")
         .toUpperCase()
         .slice(0, 2);
 }
 
 /**
- * Render the users list in the left panel.
+ * Renders a skeleton loading shimmer inside a list.
+ * @param {HTMLElement} list
+ * @param {number} count  number of skeleton cards to show
  */
-function renderUsers() {
+function renderSkeleton(list, count = 3) {
+    list.innerHTML = Array.from({ length: count })
+        .map(
+            () => `<li class="detail-card detail-card--skeleton">
+                        <div class="skeleton skeleton--title"></div>
+                        <div class="skeleton skeleton--body"></div>
+                   </li>`
+        )
+        .join("");
+}
+
+/**
+ * Renders an inline error message inside a list.
+ * @param {HTMLElement} list
+ * @param {string} message
+ */
+function renderListError(list, message) {
+    list.innerHTML = `<li class="detail-card detail-card--error">
+                          <p class="detail-card__body">⚠️ ${message}</p>
+                      </li>`;
+}
+
+// ---------- Render Functions ----------
+
+/**
+ * Renders the users list in the left panel.
+ * @param {User[]} users
+ */
+function renderUsers(users) {
     usersList.innerHTML = "";
 
-    MOCK_USERS.forEach((user) => {
+    users.forEach((user) => {
         const li = document.createElement("li");
         li.className = "user-item";
         li.setAttribute("role", "option");
@@ -99,56 +86,141 @@ function renderUsers() {
             </span>
         `;
 
-        li.addEventListener("click", () => selectUser(user.id));
+        li.addEventListener("click", () => onUserSelect(user));
         usersList.appendChild(li);
     });
 }
 
 /**
- * Handle user selection — update the detail panel.
+ * Renders a loading skeleton in the users panel.
  */
-function selectUser(userId) {
-    selectedUserId = userId;
+function renderUsersLoading() {
+    usersList.innerHTML = Array.from({ length: 8 })
+        .map(
+            () => `<li class="user-item user-item--skeleton">
+                        <span class="skeleton skeleton--avatar"></span>
+                        <span class="user-item__info">
+                            <span class="skeleton skeleton--name"></span>
+                            <span class="skeleton skeleton--username"></span>
+                        </span>
+                   </li>`
+        )
+        .join("");
+}
 
-    // Update aria‑selected on all items
-    document.querySelectorAll(".user-item").forEach((item) => {
-        item.setAttribute("aria-selected", String(Number(item.dataset.userId) === userId));
-    });
+/**
+ * Renders an error state in the users panel.
+ * @param {string} message
+ */
+function renderUsersError(message) {
+    usersList.innerHTML = `<li class="panel-error">⚠️ ${message}</li>`;
+}
 
-    const user = MOCK_USERS.find((u) => u.id === userId);
-    if (!user) return;
-
-    // Fill header
+/**
+ * Populates the detail panel header with user info.
+ * @param {User} user
+ */
+function renderDetailHeader(user) {
     detailName.textContent    = user.name;
     detailEmail.textContent   = user.email;
-    detailCompany.textContent = user.company;
+    detailCompany.textContent = user.company.name;
+}
 
-    // Fill posts
-    const posts = MOCK_POSTS[userId] || [];
-    postsList.innerHTML = posts.length
-        ? posts.map((p) => `
-            <li class="detail-card">
-                <p class="detail-card__title">${p.title}</p>
-                <p class="detail-card__body">${p.body}</p>
-            </li>
-        `).join("")
-        : `<li class="detail-card"><p class="detail-card__body">No posts yet.</p></li>`;
+/**
+ * Renders a list of posts inside the posts section.
+ * @param {Post[]} posts
+ */
+function renderPosts(posts) {
+    if (posts.length === 0) {
+        postsList.innerHTML = `<li class="detail-card">
+            <p class="detail-card__body">No posts found.</p></li>`;
+        return;
+    }
+    postsList.innerHTML = posts
+        .map(
+            (p) => `<li class="detail-card">
+                        <p class="detail-card__title">${p.title}</p>
+                        <p class="detail-card__body">${p.body}</p>
+                    </li>`
+        )
+        .join("");
+}
 
-    // Fill albums
-    const albums = MOCK_ALBUMS[userId] || [];
-    albumsList.innerHTML = albums.length
-        ? albums.map((a) => `
-            <li class="detail-card">
-                <p class="detail-card__title">${a.title}</p>
-            </li>
-        `).join("")
-        : `<li class="detail-card"><p class="detail-card__body">No albums yet.</p></li>`;
+/**
+ * Renders a list of albums inside the albums section.
+ * @param {Album[]} albums
+ */
+function renderAlbums(albums) {
+    if (albums.length === 0) {
+        albumsList.innerHTML = `<li class="detail-card">
+            <p class="detail-card__body">No albums found.</p></li>`;
+        return;
+    }
+    albumsList.innerHTML = albums
+        .map(
+            (a) => `<li class="detail-card">
+                        <p class="detail-card__title">${a.title}</p>
+                    </li>`
+        )
+        .join("");
+}
 
-    // Swap empty‑state ↔ detail‑content
+// ---------- Event Handlers ----------
+
+/**
+ * Called when the user clicks a user in the left panel.
+ * Coordinates API calls and delegates rendering.
+ * @param {User} user
+ */
+async function onUserSelect(user) {
+    // Prevent re-fetching if same user re-clicked
+    if (selectedUserId === user.id) return;
+    selectedUserId = user.id;
+
+    // Update selection highlight
+    document.querySelectorAll(".user-item").forEach((item) => {
+        item.setAttribute("aria-selected", String(Number(item.dataset.userId) === user.id));
+    });
+
+    // Show detail panel, fill header immediately (no extra fetch needed)
     emptyState.hidden    = true;
     detailContent.hidden = false;
+    renderDetailHeader(user);
+
+    // Show skeletons while fetching
+    renderSkeleton(postsList, 3);
+    renderSkeleton(albumsList, 2);
+
+    // Fetch posts & albums in parallel
+    try {
+        const [posts, albums] = await Promise.all([
+            getUserPosts(user.id),
+            getUserAlbums(user.id),
+        ]);
+        renderPosts(posts);
+        renderAlbums(albums);
+    } catch (err) {
+        console.error("Failed to load user data:", err);
+        renderListError(postsList, "Could not load posts.");
+        renderListError(albumsList, "Could not load albums.");
+    }
 }
 
 // ---------- Init ----------
 
-renderUsers();
+/**
+ * Application entry point — loads users on page start.
+ */
+async function init() {
+    renderUsersLoading();
+
+    try {
+        const users = await getUsers();
+        renderUsers(users);
+    } catch (err) {
+        console.error("Failed to load users:", err);
+        renderUsersError("Could not load users. Check your connection.");
+    }
+}
+
+init();
