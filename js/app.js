@@ -44,6 +44,7 @@ async function showUserDetail(user) {
     postsList.innerHTML  = "Loading...";
     albumsList.innerHTML = "Loading...";
 
+    // Fetch posts and albums concurrently since they are independent requests
     const [posts, albums] = await Promise.all([
         getUserPosts(user.id),
         getUserAlbums(user.id)
