@@ -13,15 +13,20 @@ const UI = {
     postsHeading: document.getElementById("posts-heading"),
     albumsHeading: document.getElementById("albums-heading"),
 
+    // Helper to generate consistent state messages safely
+    _setStateMsg(element, type, message) {
+        element.innerHTML = `<li class='state-msg ${type}'>${message}</li>`;
+    },
+
     // --- Users Panel ---
     showUsersLoading() {
-        this.usersList.innerHTML = "<li class='state-msg loading'>Loading users...</li>";
+        this._setStateMsg(this.usersList, "loading", "Loading users...");
     },
     showUsersError(message) {
-        this.usersList.innerHTML = `<li class='state-msg error'>${message}</li>`;
+        this._setStateMsg(this.usersList, "error", message);
     },
     showUsersEmpty() {
-        this.usersList.innerHTML = "<li class='state-msg empty'>No users found.</li>";
+        this._setStateMsg(this.usersList, "empty", "No users found.");
     },
     renderUsers(users, onUserClick) {
         this.usersList.innerHTML = "";
@@ -45,7 +50,7 @@ const UI = {
         });
     },
 
-    // --- Detail Panel ---
+    //Detail Panel 
     showDetailHeader(user) {
         this.detailName.textContent = user.name;
         this.detailEmail.textContent = user.email;
@@ -56,19 +61,19 @@ const UI = {
     showDetailsLoading() {
         this.postsHeading.textContent = "Posts";
         this.albumsHeading.textContent = "Albums";
-        this.postsList.innerHTML = "<li class='state-msg loading'>Loading posts...</li>";
-        this.albumsList.innerHTML = "<li class='state-msg loading'>Loading albums...</li>";
+        this._setStateMsg(this.postsList, "loading", "Loading posts...");
+        this._setStateMsg(this.albumsList, "loading", "Loading albums...");
     },
     showDetailsError() {
-        this.postsList.innerHTML = "<li class='state-msg error'>Unable to load posts.</li>";
-        this.albumsList.innerHTML = "<li class='state-msg error'>Unable to load albums.</li>";
+        this._setStateMsg(this.postsList, "error", "Unable to load posts.");
+        this._setStateMsg(this.albumsList, "error", "Unable to load albums.");
     },
     // Helper method to eliminate redundant rendering logic
     _renderDetailList(items, listEl, headingEl, label, emptyMsg) {
         headingEl.textContent = `${label}: ${items.length}`;
         listEl.innerHTML = "";
         if (items.length === 0) {
-            listEl.innerHTML = `<li class='state-msg empty'>${emptyMsg}</li>`;
+            this._setStateMsg(listEl, "empty", emptyMsg);
             return;
         }
         items.forEach(item => {

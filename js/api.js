@@ -2,14 +2,18 @@
 
 const API_BASE = "https://jsonplaceholder.typicode.com";
 
+function _get(endpoint) {
+    return fetch(`${API_BASE}${endpoint}`).then(r => r.json());
+}
+
 function getUsers() {
-    return fetch(`${API_BASE}/users`).then(r => r.json());
+    return _get("/users");
 }
 
 function getUserPosts(userId) {
-    return fetch(`${API_BASE}/users/${userId}/posts`).then(r => r.json());
+    return _get(`/users/${userId}/posts`);
 }
 
 function getUserAlbums(userId) {
-    return fetch(`${API_BASE}/users/${userId}/albums`).then(r => r.json());
+    return _get(`/users/${userId}/albums`);
 }
