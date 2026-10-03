@@ -3,79 +3,47 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Explore users, their posts and albums from JSONPlaceholder API" />
     <title>User Posts &amp; Albums Explorer</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-    <header class="app-header">
-        <h1 class="app-title">
-            <span class="app-title__icon" aria-hidden="true">👥</span>
-            User Explorer
-        </h1>
-        <p class="app-subtitle">Browse users, posts &amp; albums</p>
+    <header>
+        <h1>User Posts &amp; Albums Explorer</h1>
     </header>
 
     <main class="app-layout">
 
-        <!-- ===== Users Panel (Left) ===== -->
-        <section class="panel panel--users" aria-label="Users list">
+        <!-- Users Panel -->
+        <section class="panel--users">
             <h2 class="panel__heading">Users</h2>
-            <ul id="users-list" class="users-list" role="listbox" aria-label="Select a user">
-                <!-- populated by JS -->
-            </ul>
+            <ul id="users-list" class="users-list"></ul>
         </section>
 
-        <!-- ===== Detail Panel (Right) ===== -->
-        <section class="panel panel--detail" aria-label="Selected user details">
+        <!-- Detail Panel -->
+        <section class="panel--detail">
 
-            <!-- Empty state -->
             <div id="empty-state" class="empty-state">
-                <span class="empty-state__icon" aria-hidden="true">←</span>
-                <p class="empty-state__text">Select a user to view their posts &amp; albums</p>
+                Select a user to see their posts &amp; albums.
             </div>
 
-            <!-- Filled state (hidden until a user is selected) -->
-            <div id="detail-content" class="detail-content" hidden>
+            <div id="detail-content" hidden>
+                <h2 id="detail-name"></h2>
+                <p id="detail-email"></p>
+                <p id="detail-company"></p>
 
-                <header class="detail-header">
-                    <h2 id="detail-name" class="detail-header__name"></h2>
-                    <p id="detail-email" class="detail-header__email"></p>
-                    <p id="detail-company" class="detail-header__company"></p>
-                </header>
+                <h3 style="margin-top:1rem">Posts</h3>
+                <ul id="posts-list" class="detail-list"></ul>
 
-                <!-- Posts -->
-                <article class="detail-section" id="posts-section">
-                    <h3 class="detail-section__heading">
-                        <span class="detail-section__icon" aria-hidden="true">📝</span>
-                        Posts
-                    </h3>
-                    <ul id="posts-list" class="detail-list">
-                        <!-- populated by JS -->
-                    </ul>
-                </article>
-
-                <!-- Albums -->
-                <article class="detail-section" id="albums-section">
-                    <h3 class="detail-section__heading">
-                        <span class="detail-section__icon" aria-hidden="true">📷</span>
-                        Albums
-                    </h3>
-                    <ul id="albums-list" class="detail-list">
-                        <!-- populated by JS -->
-                    </ul>
-                </article>
-
+                <h3 style="margin-top:1rem">Albums</h3>
+                <ul id="albums-list" class="detail-list"></ul>
             </div>
+
         </section>
 
     </main>
 
-    <footer class="app-footer">
+    <footer>
         <p>Data from <a href="https://jsonplaceholder.typicode.com" target="_blank" rel="noopener">JSONPlaceholder</a></p>
     </footer>
 
