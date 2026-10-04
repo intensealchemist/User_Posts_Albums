@@ -1,14 +1,12 @@
 # Software Requirements Specification
 ## User Posts and Albums Viewer
 
-**SRS v0.2 | Draft**  
+**SRS v0.1 | Draft**  
 **Prepared By:** Atul Sharma  
 **Date:** 04 October 2026  
 **Technology:** HTML5, CSS3, JavaScript (ES6+), jQuery 4.0.0  
 **Data Source:** JSONPlaceholder REST API
 
-## Document Basis
-This revision incorporates the latest requirements clarification: the application is a presentation-layer implementation over a ready-made external business/data layer; Posts and Albums are separate API requests; and both Posts and Albums must be visible simultaneously after a user is selected.
 
 ## 1. Introduction
 ### 1.1 Purpose
@@ -173,4 +171,4 @@ Selecting another user shall update the related content without requiring a manu
 | Dynamic update | FR-09 | TC-09 |
 
 ## 11. Status
-**SRS v0.2 - Draft.** Updated to reflect the latest requirements clarification on presentation-layer scope and simultaneous Posts + Albums display.
+**SRS v0.1 - Draft.**
