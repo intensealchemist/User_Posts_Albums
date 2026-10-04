@@ -14,29 +14,33 @@
 
     <main class="app-layout">
 
-        <!-- Users Panel -->
-        <section class="panel--users">
+        <!-- Users Panel (LLD v0.3 §7) -->
+        <section id="users-panel" class="panel--users">
             <h2 class="panel__heading">Users</h2>
-            <ul id="users-list" class="users-list"></ul>
+            <div id="users-loading" hidden></div>
+            <div id="users-error" hidden></div>
+            <div id="users-list" class="users-list"></div>
         </section>
 
-        <!-- Detail Panel -->
-        <section class="panel--detail">
+        <!-- Detail Panel (LLD v0.3 §7) -->
+        <section id="details-panel" class="panel--detail">
 
-            <div id="empty-state" class="empty-state">
-                Select a user to see their posts &amp; albums.
+            <h2 id="selected-user" class="detail-user-name"></h2>
+
+            <!-- Posts section — independent loading/error state -->
+            <div id="posts-section" class="detail-section">
+                <h3 class="panel__heading">Posts</h3>
+                <div id="posts-loading" hidden></div>
+                <div id="posts-error" hidden></div>
+                <div id="posts-content"></div>
             </div>
 
-            <div id="detail-content" hidden>
-                <h2 id="detail-name"></h2>
-                <p id="detail-email"></p>
-                <p id="detail-company"></p>
-
-                <h3 id="posts-heading" style="margin-top:1rem">Posts</h3>
-                <ul id="posts-list" class="detail-list"></ul>
-
-                <h3 id="albums-heading" style="margin-top:1rem">Albums</h3>
-                <ul id="albums-list" class="detail-list"></ul>
+            <!-- Albums section — independent loading/error state -->
+            <div id="albums-section" class="detail-section">
+                <h3 class="panel__heading">Albums</h3>
+                <div id="albums-loading" hidden></div>
+                <div id="albums-error" hidden></div>
+                <div id="albums-content"></div>
             </div>
 
         </section>
@@ -48,6 +52,14 @@
     </footer>
 
     <script src="https://code.jquery.com/jquery-4.0.0-beta.min.js"></script>
+    <!-- Fallback if jQuery CDN fails (e.g. network issue) -->
+    <script>
+        if (typeof jQuery === 'undefined') {
+            document.getElementById('users-panel').innerHTML = 
+                '<div class="state-msg error" style="margin-top: 1rem;">Critical Error: Failed to load required libraries (jQuery). Please check your internet connection and refresh the page.</div>';
+            throw new Error('jQuery failed to load from CDN.');
+        }
+    </script>
     <script src="js/api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>

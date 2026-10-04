@@ -1,80 +1,134 @@
-// ui.js — DOM rendering and UI state updates via jQuery
+// UI rendering and DOM updates
 
-const UI = {
-    // Helper to generate consistent state messages safely
-    _setStateMsg($element, type, message) {
-        $element.html(`<li class='state-msg ${type}'>${message}</li>`);
-    },
+// Users panel functions
 
-    // --- Users Panel ---
-    showUsersLoading() {
-        this._setStateMsg($("#users-list"), "loading", "Loading users...");
-    },
-    showUsersError(message) {
-        this._setStateMsg($("#users-list"), "error", message);
-    },
-    showUsersEmpty() {
-        this._setStateMsg($("#users-list"), "empty", "No users found.");
-    },
-    renderUsers(users) {
-        const $list = $("#users-list");
-        $list.empty();
+function showUsersLoading() {
+    $("#users-loading").text("Loading users...").prop("hidden", false);
+}
 
-        $.each(users, function(_, u) {
-            const $btn = $("<button>", {
-                class: "user-item",
-                "data-id": u.id,
-                text: u.name // SAFE DOM API via jQuery
-            });
-            $("<li>").append($btn).appendTo($list);
-        });
-    },
-    setActiveUser(userId) {
-        $(".user-item").removeClass("active");
-        $(`.user-item[data-id='${userId}']`).addClass("active");
-    },
+function hideUsersLoading() {
+    $("#users-loading").prop("hidden", true).empty();
+}
 
-    // --- Detail Panel ---
-    showDetailHeader(user) {
-        $("#detail-name").text(user.name);
-        $("#detail-email").text(user.email);
-        $("#detail-company").text(user.company.name);
-        $("#empty-state").prop("hidden", true);
-        $("#detail-content").prop("hidden", false);
-    },
-    showDetailsLoading() {
-        $("#posts-heading").text("Posts");
-        $("#albums-heading").text("Albums");
-        this._setStateMsg($("#posts-list"), "loading", "Loading posts...");
-        this._setStateMsg($("#albums-list"), "loading", "Loading albums...");
-    },
-    showDetailsError() {
-        this._setStateMsg($("#posts-list"), "error", "Unable to load posts.");
-        this._setStateMsg($("#albums-list"), "error", "Unable to load albums.");
-    },
-    
-    // Helper method to eliminate redundant rendering logic
-    _renderDetailList(items, $list, $heading, label, emptyMsg) {
-        $heading.text(`${label}: ${items.length}`);
-        $list.empty();
-        
-        if (items.length === 0) {
-            this._setStateMsg($list, "empty", emptyMsg);
-            return;
-        }
-        
-        $.each(items, function(_, item) {
-            $("<li>", {
-                class: "detail-card",
-                text: item.title // SAFE DOM API via jQuery
-            }).appendTo($list);
-        });
-    },
+function showUsersError(message) {
+    $("#users-error").text(message).prop("hidden", false);
+}
 
-    renderPosts(posts) {
-        this._renderDetailList(posts, $("#posts-list"), $("#posts-heading"), "Posts", "No posts found.");
-    },
-    renderAlbums(albums) {
-        this._renderDetailList(albums, $("#albums-list"), $("#albums-heading"), "Albums", "No albums found.");
+function clearUsersError() {
+    $("#users-error").prop("hidden", true).empty();
+}
+
+// Render users list
+function renderUsers(users) {
+    const $list = $("#users-list");
+    $list.empty();
+
+    if (users.length === 0) {
+        $list.append($("<p>").text("No users found."));
+        return;
     }
-};
+
+    $.each(users, function (_, user) {
+        const $button = $("<button>", {
+            type: "button",
+            class: "user-item",
+            text: user.name,             // SAFE: jQuery .text() prevents HTML injection
+            "data-user-id": user.id
+        });
+        $list.append($button);
+    });
+}
+
+// Highlights the selected user button
+function setActiveUser(userId) {
+    $(".user-item").removeClass("active");
+    $(`.user-item[data-user-id='${userId}']`).addClass("active");
+}
+
+// Posts panel functions
+
+function showPostsLoading() {
+    $("#posts-loading").text("Loading posts...").prop("hidden", false);
+}
+
+function hidePostsLoading() {
+    $("#posts-loading").prop("hidden", true).empty();
+}
+
+function showPostsError(message) {
+    $("#posts-error").text(message).prop("hidden", false);
+}
+
+function clearPostsError() {
+    $("#posts-error").prop("hidden", true).empty();
+}
+
+function clearPostsContent() {
+    $("#posts-content").empty();
+}
+
+// Render posts list
+function renderPosts(posts) {
+    const $content = $("#posts-content");
+    $content.empty();
+
+    if (posts.length === 0) {
+        $content.append($("<p>").text("No posts available for this user."));
+        return;
+    }
+
+    const $list = $("<ul>");
+    $.each(posts, function (_, post) {
+        const $item = $("<li>");
+        $("<strong>").text(post.title).appendTo($item);  // SAFE: .text()
+        $("<p>").text(post.body).appendTo($item);        // SAFE: .text()
+        $item.appendTo($list);
+    });
+    $content.append($list);
+}
+
+// Albums panel functions
+
+function showAlbumsLoading() {
+    $("#albums-loading").text("Loading albums...").prop("hidden", false);
+}
+
+function hideAlbumsLoading() {
+    $("#albums-loading").prop("hidden", true).empty();
+}
+
+function showAlbumsError(message) {
+    $("#albums-error").text(message).prop("hidden", false);
+}
+
+function clearAlbumsError() {
+    $("#albums-error").prop("hidden", true).empty();
+}
+
+function clearAlbumsContent() {
+    $("#albums-content").empty();
+}
+
+// Render albums list
+function renderAlbums(albums) {
+    const $content = $("#albums-content");
+    $content.empty();
+
+    if (albums.length === 0) {
+        $content.append($("<p>").text("No albums available for this user."));
+        return;
+    }
+
+    const $list = $("<ul>");
+    $.each(albums, function (_, album) {
+        $("<li>").text(album.title).appendTo($list);  // SAFE: .text()
+    });
+    $content.append($list);
+}
+
+// Show error in both detail panels
+
+function showDetailError(message) {
+    showPostsError(message);
+    showAlbumsError(message);
+}

@@ -1,23 +1,30 @@
-// api.js — API calls only using jQuery $.ajax
+// API request functions
 
-const API_BASE = "https://jsonplaceholder.typicode.com";
+const API_BASE_URL = "https://jsonplaceholder.typicode.com";
 
-function _get(endpoint) {
+// GET https://jsonplaceholder.typicode.com/users
+function getUsers() {
     return $.ajax({
-        url: `${API_BASE}${endpoint}`,
+        url: `${API_BASE_URL}/users`,
         method: "GET",
         dataType: "json"
     });
 }
 
-function getUsers() {
-    return _get("/users");
-}
-
+// GET https://jsonplaceholder.typicode.com/users/{userId}/posts
 function getUserPosts(userId) {
-    return _get(`/users/${userId}/posts`);
+    return $.ajax({
+        url: `${API_BASE_URL}/users/${userId}/posts`,
+        method: "GET",
+        dataType: "json"
+    });
 }
 
+// GET https://jsonplaceholder.typicode.com/users/{userId}/albums
 function getUserAlbums(userId) {
-    return _get(`/users/${userId}/albums`);
+    return $.ajax({
+        url: `${API_BASE_URL}/users/${userId}/albums`,
+        method: "GET",
+        dataType: "json"
+    });
 }
