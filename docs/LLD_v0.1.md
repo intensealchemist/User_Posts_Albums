@@ -190,320 +190,249 @@ Stable containers are defined in HTML and updated through jQuery.
 ### 8.1 Base URL
 
 ```javascript
-const API_BASE_URL = "https://jsonplaceholder.typicode.com";
+const API_BASE = "https://jsonplaceholder.typicode.com";
 ```
 
-### 8.2 Retrieve users
+### 8.2 Internal GET helper
+
+A private `_get` helper centralises the `$.ajax` call to avoid repeating the same pattern across all three public functions.
+
+```javascript
+function _get(endpoint) {
+    return $.ajax({
+        url: `${API_BASE}${endpoint}`,
+        method: "GET",
+        dataType: "json"
+    });
+}
+```
+
+### 8.3 Retrieve users
 
 ```javascript
 function getUsers() {
-    return $.ajax({
-        url: `${API_BASE_URL}/users`,
-        method: "GET",
-        dataType: "json"
-    });
+    return _get("/users");
 }
 ```
 
-### 8.3 Retrieve posts
+### 8.4 Retrieve posts
 
 ```javascript
 function getUserPosts(userId) {
-    return $.ajax({
-        url: `${API_BASE_URL}/users/${userId}/posts`,
-        method: "GET",
-        dataType: "json"
-    });
+    return _get(`/users/${userId}/posts`);
 }
 ```
 
-### 8.4 Retrieve albums
+### 8.5 Retrieve albums
 
 ```javascript
 function getUserAlbums(userId) {
-    return $.ajax({
-        url: `${API_BASE_URL}/users/${userId}/albums`,
-        method: "GET",
-        dataType: "json"
-    });
+    return _get(`/users/${userId}/albums`);
 }
 ```
 
 ### API-layer rule
 
-The API layer returns the result of the jQuery AJAX operation. UI rendering, loading messages, and error presentation are handled by `app.js` and `ui.js`.
+The API layer returns the jQuery Deferred object produced by `$.ajax`. UI rendering, loading messages, and error presentation are handled by `app.js` and `ui.js`.
 
 ## 9. Application Logic (`app.js`)
 
-`app.js` owns state, event handling, request orchestration, and selection logic.
+`app.js` owns state, event handling, request orchestration, and selection logic. All DOM updates are delegated to `UI` methods in `ui.js`.
 
-### 9.1 Initialization
+### 9.1 State object
 
 ```javascript
-$(function () {
-    loadUsers();
-    bindEvents();
-});
+const state = {
+    users: [],
+    selectedUserId: null
+};
 ```
 
-### 9.2 Initial user retrieval
-
-The initial request has its own loading and error state so the users area can communicate the request status independently of selected-user details.
+### 9.2 Initialization
 
 ```javascript
-function loadUsers() {
-    state.usersLoading = true;
-    state.usersError = null;
+$(function() {
+    init();
+});
 
-    showUsersLoading();
-    clearUsersError();
+function init() {
+    UI.showUsersLoading();
 
-    return getUsers()
-        .done(function (users) {
+    getUsers()
+        .done(function(users) {
             state.users = users;
-            renderUsers(state.users);
+            if (users.length === 0) {
+                UI.showUsersEmpty();
+            } else {
+                UI.renderUsers(users);
+                bindEvents();
+            }
         })
-        .fail(function () {
-            state.usersError = "Failed to fetch users.";
-            showUsersError(state.usersError);
-        })
-        .always(function () {
-            state.usersLoading = false;
-            hideUsersLoading();
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            console.error("Failed to fetch users:", textStatus, errorThrown);
+            UI.showUsersError("Unable to load user list.");
         });
 }
 ```
 
-### 9.3 User selection
+### 9.3 Event binding (delegated)
+
+Because user buttons are created dynamically, click events are delegated on the stable `#users-list` container.
 
 ```javascript
-function handleUserSelection(user) {
-    if (!user || !user.id) {
-        showError("Unable to identify the selected user.");
-        return;
-    }
-
-    state.selectedUser = user;
-    state.posts = [];
-    state.albums = [];
-    state.activeView = "posts";
-    state.detailsError = null;
-    state.detailRequestId += 1;
-
-    $("#selected-user").text(user.name);
-    clearContentArea();
-    clearError();
-
-    loadUserDetails(user.id, state.detailRequestId);
-}
-```
-
-### 9.4 Loading posts and albums
-
-The two resources are independent, so they are initiated concurrently with `$.when()`.
-
-```javascript
-function loadUserDetails(userId, requestId) {
-    state.detailsLoading = true;
-    showLoading();
-    clearError();
-    setContentControlsEnabled(false);
-
-    return $.when(
-        getUserPosts(userId),
-        getUserAlbums(userId)
-    )
-    .done(function (posts, albums) {
-        // Ignore a late response for a previous user selection.
-        if (requestId !== state.detailRequestId) {
-            return;
-        }
-
-        state.posts = posts[0];
-        state.albums = albums[0];
-        state.detailsError = null;
-
-        setContentControlsEnabled(true);
-        renderActiveView();
-    })
-    .fail(function () {
-        if (requestId !== state.detailRequestId) {
-            return;
-        }
-
-        state.detailsError = "Failed to load user details.";
-        clearContentArea();
-        showError(state.detailsError);
-    })
-    .always(function () {
-        if (requestId === state.detailRequestId) {
-            state.detailsLoading = false;
-            hideLoading();
-        }
+function bindEvents() {
+    $("#users-list").on("click", ".user-item", function() {
+        const userId = Number($(this).data("id"));
+        handleUserSelection(userId);
     });
 }
 ```
 
-The request ID prevents an earlier selection from overwriting the UI after the user has already selected another user.
-
-### 9.5 View switching
+### 9.4 User selection
 
 ```javascript
-function handleViewChange(view) {
-    if (state.detailsLoading || state.detailsError) {
-        return;
-    }
+function handleUserSelection(userId) {
+    if (state.selectedUserId === userId) return;
+    state.selectedUserId = userId;
 
-    state.activeView = view;
-    clearError();
-    renderActiveView();
+    const user = state.users.find(u => u.id === userId);
+    if (!user) return;
+
+    UI.setActiveUser(userId);
+    UI.showDetailHeader(user);
+    UI.showDetailsLoading();
+
+    loadUserDetails(userId);
 }
 ```
 
+### 9.5 Loading posts and albums
+
+The two resources are independent, so they are initiated concurrently with `$.when()`.
+
 ```javascript
-function renderActiveView() {
-    if (state.activeView === "posts") {
-        renderPosts(state.posts);
-    } else {
-        renderAlbums(state.albums);
-    }
+function loadUserDetails(userId) {
+    $.when(
+        getUserPosts(userId),
+        getUserAlbums(userId)
+    )
+    .done(function(postsRes, albumsRes) {
+        // $.when returns [data, statusText, jqXHR] per call
+        UI.renderPosts(postsRes[0]);
+        UI.renderAlbums(albumsRes[0]);
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+        console.error("Failed to fetch user details:", textStatus, errorThrown);
+        UI.showDetailsError();
+    });
 }
 ```
 
 ## 10. UI Rendering Layer (`ui.js`)
 
-`ui.js` performs DOM updates and contains no API transport logic.
+`ui.js` performs all DOM updates using jQuery and contains no API transport logic. All methods are grouped inside a single `UI` object, which clearly separates them from application state in `app.js`.
 
-### 10.1 Render users
+### 10.1 State message helper
+
+A private `_setStateMsg` helper centralises the repeated pattern of clearing a list element and inserting a single status `<li>`.
+
+```javascript
+_setStateMsg($element, type, message) {
+    $element.html(`<li class='state-msg ${type}'>${message}</li>`);
+},
+```
+
+Used for loading, error, and empty states across both panels.
+
+### 10.2 Users panel methods
+
+```javascript
+showUsersLoading() {
+    this._setStateMsg($("#users-list"), "loading", "Loading users...");
+},
+showUsersError(message) {
+    this._setStateMsg($("#users-list"), "error", message);
+},
+showUsersEmpty() {
+    this._setStateMsg($("#users-list"), "empty", "No users found.");
+},
+```
+
+### 10.3 Render users
 
 JSONPlaceholder exposes a single `name` field for each user. For this assignment, that full display value is treated as the required first-name + last-name presentation. No additional name-parsing rule is introduced.
 
+JQuery `.text()` is used to insert user names safely without HTML injection risk.
+
 ```javascript
-function renderUsers(users) {
+renderUsers(users) {
     const $list = $("#users-list");
     $list.empty();
 
-    $.each(users, function (_, user) {
-        const $button = $("<button>", {
-            type: "button",
+    $.each(users, function(_, u) {
+        const $btn = $("<button>", {
             class: "user-item",
-            text: user.name,
-            "data-user-id": user.id
+            "data-id": u.id,
+            text: u.name  // SAFE: jQuery .text() prevents HTML injection
         });
-
-        $list.append($button);
+        $("<li>").append($btn).appendTo($list);
     });
-}
+},
+setActiveUser(userId) {
+    $(".user-item").removeClass("active");
+    $(`.user-item[data-id='${userId}']`).addClass("active");
+},
 ```
 
-### 10.2 Render Posts
-
-Posts replace the content area.
+### 10.4 Detail panel methods
 
 ```javascript
-function renderPosts(posts) {
-    const $content = $("#content-area");
-    $content.empty();
+showDetailHeader(user) {
+    $("#detail-name").text(user.name);
+    $("#detail-email").text(user.email);
+    $("#detail-company").text(user.company.name);
+    $("#empty-state").prop("hidden", true);
+    $("#detail-content").prop("hidden", false);
+},
+showDetailsLoading() {
+    $("#posts-heading").text("Posts");
+    $("#albums-heading").text("Albums");
+    this._setStateMsg($("#posts-list"), "loading", "Loading posts...");
+    this._setStateMsg($("#albums-list"), "loading", "Loading albums...");
+},
+showDetailsError() {
+    this._setStateMsg($("#posts-list"), "error", "Unable to load posts.");
+    this._setStateMsg($("#albums-list"), "error", "Unable to load albums.");
+},
+```
 
-    const $heading = $("<h3>").text(`Posts: ${posts.length}`);
-    $content.append($heading);
+### 10.5 Render Posts and Albums
 
-    if (posts.length === 0) {
-        $content.append($("<p>").text("No posts available for this user."));
+A shared private `_renderDetailList` helper removes the duplication between `renderPosts` and `renderAlbums`. Both datasets share identical rendering structure (heading with count, list of `<li>` cards, or an empty state message).
+
+```javascript
+_renderDetailList(items, $list, $heading, label, emptyMsg) {
+    $heading.text(`${label}: ${items.length}`);
+    $list.empty();
+
+    if (items.length === 0) {
+        this._setStateMsg($list, "empty", emptyMsg);
         return;
     }
 
-    const $list = $("<ul>");
-
-    $.each(posts, function (_, post) {
-        const $item = $("<li>");
-        $("<strong>").text(post.title).appendTo($item);
-        $("<p>").text(post.body).appendTo($item);
-        $item.appendTo($list);
+    $.each(items, function(_, item) {
+        $("<li>", {
+            class: "detail-card",
+            text: item.title  // SAFE: jQuery .text() prevents HTML injection
+        }).appendTo($list);
     });
+},
 
-    $content.append($list);
-}
-```
-
-### 10.3 Render Albums
-
-Albums replace the same content area; Posts are not simultaneously rendered.
-
-```javascript
-function renderAlbums(albums) {
-    const $content = $("#content-area");
-    $content.empty();
-
-    const $heading = $("<h3>").text(`Albums: ${albums.length}`);
-    $content.append($heading);
-
-    if (albums.length === 0) {
-        $content.append($("<p>").text("No albums available for this user."));
-        return;
-    }
-
-    const $list = $("<ul>");
-
-    $.each(albums, function (_, album) {
-        $("<li>")
-            .text(album.title)
-            .appendTo($list);
-    });
-
-    $content.append($list);
-}
-```
-
-### 10.4 Loading and error feedback
-
-```javascript
-function showUsersLoading() {
-    $("#users-loading")
-        .text("Loading users...")
-        .prop("hidden", false);
-}
-
-function hideUsersLoading() {
-    $("#users-loading").prop("hidden", true);
-}
-
-function showLoading() {
-    $("#loading-message")
-        .text("Loading posts and albums...")
-        .prop("hidden", false);
-}
-
-function hideLoading() {
-    $("#loading-message").prop("hidden", true);
-}
-
-function showUsersError(message) {
-    $("#users-error")
-        .text(message)
-        .prop("hidden", false);
-}
-
-function showError(message) {
-    $("#error-message")
-        .text(message)
-        .prop("hidden", false);
-}
-
-function clearUsersError() {
-    $("#users-error").prop("hidden", true).empty();
-}
-
-function clearError() {
-    $("#error-message").prop("hidden", true).empty();
-}
-
-function clearContentArea() {
-    $("#content-area").empty();
-}
-
-function setContentControlsEnabled(enabled) {
-    $("#posts-btn, #albums-btn").prop("disabled", !enabled);
+renderPosts(posts) {
+    this._renderDetailList(posts, $("#posts-list"), $("#posts-heading"), "Posts", "No posts found.");
+},
+renderAlbums(albums) {
+    this._renderDetailList(albums, $("#albums-list"), $("#albums-heading"), "Albums", "No albums found.");
 }
 ```
 
