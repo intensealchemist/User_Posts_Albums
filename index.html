@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>User Posts &amp; Albums Explorer</title>
     <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
 
     <header>
@@ -16,7 +18,7 @@
 
         <!-- Users Panel (LLD v0.3 §7) -->
         <section id="users-panel" class="panel--users">
-            <h2 class="panel__heading">Users</h2>
+            <h2 class="panel_heading">Users</h2>
             <div id="users-loading" hidden></div>
             <div id="users-error" hidden></div>
             <div id="users-list" class="users-list"></div>
@@ -29,7 +31,7 @@
 
             <!-- Posts section — independent loading/error state -->
             <div id="posts-section" class="detail-section">
-                <h3 class="panel__heading">Posts</h3>
+                <h3 class="panel_heading">Posts</h3>
                 <div id="posts-loading" hidden></div>
                 <div id="posts-error" hidden></div>
                 <div id="posts-content"></div>
@@ -37,7 +39,7 @@
 
             <!-- Albums section — independent loading/error state -->
             <div id="albums-section" class="detail-section">
-                <h3 class="panel__heading">Albums</h3>
+                <h3 class="panel_heading">Albums</h3>
                 <div id="albums-loading" hidden></div>
                 <div id="albums-error" hidden></div>
                 <div id="albums-content"></div>
@@ -48,13 +50,14 @@
     </main>
 
     <footer>
-        <p>Data from <a href="https://jsonplaceholder.typicode.com" target="_blank" rel="noopener">JSONPlaceholder</a></p>
+        <p>Data from <a href="https://jsonplaceholder.typicode.com" target="_blank" rel="noopener">JSONPlaceholder</a>
+        </p>
     </footer>
 
     <script src="https://code.jquery.com/jquery-4.0.0-beta.min.js"></script>
     <script>
         if (typeof jQuery === 'undefined') {
-            document.getElementById('users-panel').innerHTML = 
+            document.getElementById('users-panel').innerHTML =
                 '<div class="state-msg error" style="margin-top: 1rem;">Critical Error: Failed to load required libraries (jQuery). Please check your internet connection and refresh the page.</div>';
             throw new Error('jQuery failed to load from CDN.');
         }
@@ -63,4 +66,5 @@
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>

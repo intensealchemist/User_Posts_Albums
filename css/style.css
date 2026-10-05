@@ -1,6 +1,10 @@
 /* User Posts & Albums Explorer */
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 body {
     font-family: sans-serif;
@@ -10,7 +14,10 @@ body {
     background: #f5f5f5;
 }
 
-h1 { padding: 1rem; font-size: 1.4rem; }
+h1 {
+    padding: 1rem;
+    font-size: 1.4rem;
+}
 
 .app-layout {
     display: flex;
@@ -26,7 +33,9 @@ h1 { padding: 1rem; font-size: 1.4rem; }
 }
 
 /* User list */
-.users-list li { list-style: none; }
+.users-list li {
+    list-style: none;
+}
 
 .user-item {
     display: block;
@@ -40,8 +49,14 @@ h1 { padding: 1rem; font-size: 1.4rem; }
     font-size: 1rem;
 }
 
-.user-item:hover  { background: #e0e0e0; }
-.user-item.active { background: #c8e6c9; font-weight: bold; }
+.user-item:hover {
+    background: #e0e0e0;
+}
+
+.user-item.active {
+    background: #c8e6c9;
+    font-weight: bold;
+}
 
 /* Detail Layout */
 .panel--detail {
@@ -49,7 +64,7 @@ h1 { padding: 1rem; font-size: 1.4rem; }
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto 1fr;
-    grid-template-areas: 
+    grid-template-areas:
         "header header"
         "posts albums";
     gap: 1.5rem;
@@ -64,10 +79,15 @@ h1 { padding: 1rem; font-size: 1.4rem; }
     color: #333;
 }
 
-#posts-section { grid-area: posts; }
-#albums-section { grid-area: albums; }
+#posts-section {
+    grid-area: posts;
+}
 
-.panel__heading {
+#albums-section {
+    grid-area: albums;
+}
+
+.panel_heading {
     font-weight: bold;
     margin-bottom: 1rem;
     border-bottom: 1px solid #ccc;
@@ -76,19 +96,21 @@ h1 { padding: 1rem; font-size: 1.4rem; }
 }
 
 /* Detail Lists & Cards */
-#posts-content ul, #albums-content ul {
+#posts-content ul,
+#albums-content ul {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-#posts-content li, #albums-content li {
+#posts-content li,
+#albums-content li {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 6px;
     padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 #posts-content strong {
