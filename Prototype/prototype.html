@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Posts & Albums Viewer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #cccccc;
+            background-color: #f8f8f8;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 250px 1fr 1fr;
+            flex: 1;
+            overflow: hidden; /* Prevent body scroll, columns scroll internally */
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #cccccc;
+            background-color: #ffffff;
+        }
+        
+        .section:last-child {
+            border-right: none;
+        }
+
+        .section-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dddddd;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        .section-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Users specific */
+        .user-item {
+            padding: 0.75rem 1rem;
+            border: 1px solid #cccccc;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            background-color: #fafafa;
+        }
+
+        .user-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .user-item.selected {
+            background-color: #e0e0e0;
+            border: 2px solid #999999;
+            font-weight: bold;
+        }
+        
+        .selected-indicator {
+            float: right;
+        }
+
+        /* Empty States */
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #777777;
+            font-size: 1.1rem;
+        }
+
+        /* Item Viewers (Posts/Albums) */
+        .item-viewer {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .item-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 1rem;
+        }
+
+        .item-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 1rem 0;
+            border-top: 2px solid #cccccc;
+            background-color: #ffffff;
+            margin-top: auto;
+        }
+
+        button {
+            padding: 0.5rem 1.5rem;
+            background-color: #eeeeee;
+            border: 1px solid #999999;
+            color: #333333;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #dddddd;
+        }
+
+        button:disabled {
+            background-color: #f9f9f9;
+            border-color: #dddddd;
+            color: #aaaaaa;
+            cursor: not-allowed;
+        }
+
+        /* Post Content */
+        .post-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .post-body {
+            margin-bottom: 2rem;
+            line-height: 1.5;
+            color: #444444;
+        }
+
+        .comments-separator {
+            border-top: 1px solid #cccccc;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        .comments-title {
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .comment-item {
+            padding: 1rem;
+            border: 1px solid #dddddd;
+            background-color: #f9f9f9;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .comments-status {
+            padding: 1rem 0;
+            color: #555555;
+            font-style: italic;
+        }
+
+        /* Album Content */
+        .album-header-label {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .album-thumbnail-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .album-thumbnail {
+            width: 200px;
+            height: 200px;
+            border: 2px solid #999999;
+            background-color: #eeeeee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #555555;
+            font-weight: bold;
+        }
+
+        .album-thumbnail:hover {
+            background-color: #e0e0e0;
+        }
+
+        .album-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 0 1rem;
+        }
+
+        /* Modal / Lightbox */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border: 1px solid #777777;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .modal-image {
+            width: 500px;
+            height: 400px;
+            background-color: #e5e5e5;
+            border: 2px solid #cccccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #555555;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        User Posts & Albums Viewer
+    </header>
+
+    <main>
+        <!-- Users Section -->
+        <div class="section">
+            <div class="section-header">USERS</div>
+            <div class="section-content" id="users-list">
+                <!-- Users will be populated here -->
+            </div>
+        </div>
+
+        <!-- Posts Section -->
+        <div class="section">
+            <div class="section-header">POSTS</div>
+            <div class="section-content" id="posts-container">
+                <!-- Posts or Default State populated here -->
+            </div>
+        </div>
+
+        <!-- Albums Section -->
+        <div class="section">
+            <div class="section-header">ALBUMS</div>
+            <div class="section-content" id="albums-container">
+                <!-- Albums or Default State populated here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Album Image Popup -->
+    <div class="modal-overlay hidden" id="image-modal">
+        <div class="modal-content">
+            <div class="modal-image">
+                Crisp Album Image
+            </div>
+            <button onclick="closeModal()">Close Popup</button>
+        </div>
+    </div>
+
+    <script>
+        // --- MOCK DATA ---
+        const users = [
+            { id: 1, name: "Leanne Graham" },
+            { id: 2, name: "Ervin Howell" },
+            { id: 3, name: "Clementine Bauch" },
+            { id: 4, name: "Patricia Lebsack" },
+            { id: 5, name: "Chelsey Dietrich" }
+        ];
+
+        // Structure allows testing different states
+        const postsData = {
+            1: [
+                { id: 11, title: "sunt aut facere repellat provident occaecati excepturi", body: "quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto" },
+                { id: 12, title: "qui est esse (Empty Comments State)", body: "est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis\nqui aperiam non debitis possimus qui neque nisi nulla" },
+                { id: 13, title: "ea molestias quasi exercitationem repellat (Error State)", body: "et iusto sed quo iure\nvoluptatem occaecati omnis eligendi aut ad\nvoluptatem doloribus vel accusantium quis pariatur\nmolestiae porro eius odio et labore et velit aut" }
+            ],
+            2: [
+                { id: 21, title: "Post 1 for Ervin", body: "Ervin post content..." },
+                { id: 22, title: "Post 2 for Ervin", body: "More Ervin post content..." }
+            ]
+        };
+
+        const albumsData = {
+            1: [
+                { id: 101, title: "quidem molestiae enim" },
+                { id: 102, title: "sunt qui excepturi placeat culpa" },
+                { id: 103, title: "omnis laborum odio" }
+            ],
+            2: [
+                { id: 201, title: "Album 1 Ervin" }
+            ]
+        };
+
+        const commentsData = {
+            11: [
+                { id: 1, text: "laudantium enim quasi est quidem magnam voluptate ipsam eos\ntempora quo necessitatibus\ndolor quam autem quasi" },
+                { id: 2, text: "est natus enim nihil est dolore omnis voluptatem numquam\net omnis occaecati quod ullam at\nvoluptatem error expedita pariatur" },
+                { id: 3, text: "quia molestiae reprehenderit quasi aspernatur\naut expedita occaecati aliquam eveniet laudantium\nomnis quibusdam delectus saepe quia accusamus maiores nam est" }
+            ],
+            12: [], // empty comments state
+            13: null, // error loading state
+            21: [{ id: 4, text: "Comment for Ervin post" }],
+            22: [{ id: 5, text: "Another comment for Ervin" }]
+        };
+
+        // --- APPLICATION STATE ---
+        let currentUserId = null;
+        let userPosts = [];
+        let userAlbums = [];
+        let currentPostIdx = 0;
+        let currentAlbumIdx = 0;
+        let commentTimeout = null;
+
+        // --- DOM ELEMENTS ---
+        const usersList = document.getElementById('users-list');
+        const postsContainer = document.getElementById('posts-container');
+        const albumsContainer = document.getElementById('albums-container');
+        const modal = document.getElementById('image-modal');
+
+        // --- INITIALIZATION ---
+        function init() {
+            renderUsers();
+            renderDefaultState();
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderUsers() {
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'user-item';
+                if (user.id === currentUserId) {
+                    div.classList.add('selected');
+                    div.innerHTML = `${user.name} <span class="selected-indicator">←</span>`;
+                } else {
+                    div.textContent = user.name;
+                }
+                div.onclick = () => selectUser(user.id);
+                usersList.appendChild(div);
+            });
+        }
+
+        function renderDefaultState() {
+            postsContainer.innerHTML = '<div class="empty-state">Select a user<br>to view Posts</div>';
+            albumsContainer.innerHTML = '<div class="empty-state">Select a user<br>to view Albums</div>';
+        }
+
+        // --- INTERACTION LOGIC ---
+        function selectUser(id) {
+            currentUserId = id;
+            userPosts = postsData[id] || [];
+            userAlbums = albumsData[id] || [];
+            currentPostIdx = 0;
+            currentAlbumIdx = 0;
+            
+            renderUsers(); // Update visual selection state
+            renderPost();
+            renderAlbum();
+        }
+
+        // --- POSTS LOGIC ---
+        function renderPost() {
+            if (userPosts.length === 0) {
+                postsContainer.innerHTML = '<div class="empty-state">No Posts Available</div>';
+                return;
+            }
+            
+            const post = userPosts[currentPostIdx];
+            
+            const html = `
+                <div class="item-viewer">
+                    <div class="item-scroll-area">
+                        <div class="album-header-label">Post ${currentPostIdx + 1}</div>
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-body">${post.body.replace(/\n/g, '<br>')}</div>
+                        
+                        <div class="comments-separator"></div>
+                        <div class="comments-title">Comments</div>
+                        
+                        <div id="comments-container">
+                            <!-- Comments go here -->
+                        </div>
+                    </div>
+                    <div class="item-navigation">
+                        <button onclick="navPost(-1)" ${currentPostIdx === 0 ? 'disabled' : ''}>[ Previous ]</button>
+                        <button onclick="navPost(1)" ${currentPostIdx === userPosts.length - 1 ? 'disabled' : ''}>[ Next ]</button>
+                    </div>
+                </div>
+            `;
+            postsContainer.innerHTML = html;
+            
+            // Clear previous comments visually and begin loading new ones
+            loadComments(post.id);
+        }
+
+        function loadComments(postId) {
+            // Cancel any pending comment loads if user navigated quickly
+            if (commentTimeout) clearTimeout(commentTimeout);
+            
+            const container = document.getElementById('comments-container');
+            
+            // 1. Display loading state immediately
+            container.innerHTML = '<div class="comments-status">◌ [ Loading comments... ]</div>';
+            
+            // 2. Simulate network delay
+            commentTimeout = setTimeout(() => {
+                const data = commentsData[postId];
+                
+                // 3. Handle various comment states
+                if (data === null) {
+                    // Error state
+                    container.innerHTML = '<div class="comments-status">Unable to load comments.</div>';
+                } else if (data.length === 0) {
+                    // Empty state
+                    container.innerHTML = '<div class="comments-status">No comments available.</div>';
+                } else {
+                    // Loaded state
+                    container.innerHTML = data.map((c, index) => `
+                        <div class="comment-item">
+                            <strong>Comment ${index + 1}</strong><br>
+                            ${c.text.replace(/\n/g, '<br>')}
+                        </div>
+                    `).join('');
+                }
+            }, 1000); // 1 second delay to make loading state visible
+        }
+
+        function navPost(dir) {
+            currentPostIdx += dir;
+            renderPost();
+        }
+
+        // --- ALBUMS LOGIC ---
+        function renderAlbum() {
+            if (userAlbums.length === 0) {
+                albumsContainer.innerHTML = '<div class="empty-state">No Albums Available</div>';
+                return;
+            }
+            
+            const album = userAlbums[currentAlbumIdx];
+            
+            const html = `
+                <div class="item-viewer">
+                    <div class="item-scroll-area">
+                        <div class="album-header-label">Album ${currentAlbumIdx + 1}</div>
+                        <div class="album-thumbnail-container">
+                            <div class="album-thumbnail" onclick="openModal()">
+                                [ Thumbnail ]
+                            </div>
+                        </div>
+                        <div class="album-title">${album.title}</div>
+                    </div>
+                    <div class="item-navigation">
+                        <button onclick="navAlbum(-1)" ${currentAlbumIdx === 0 ? 'disabled' : ''}>[ Previous ]</button>
+                        <button onclick="navAlbum(1)" ${currentAlbumIdx === userAlbums.length - 1 ? 'disabled' : ''}>[ Next ]</button>
+                    </div>
+                </div>
+            `;
+            albumsContainer.innerHTML = html;
+        }
+
+        function navAlbum(dir) {
+            currentAlbumIdx += dir;
+            renderAlbum();
+        }
+
+        // --- MODAL LOGIC ---
+        function openModal() {
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        // Close modal when clicking on overlay background
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
