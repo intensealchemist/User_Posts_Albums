@@ -27,13 +27,45 @@
             background-color: #f8f8f8;
             font-size: 1.2rem;
             font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .toggle-btn {
+            background-color: #eeeeee;
+            border: 1px solid #999999;
+            padding: 0.4rem 1rem;
+            cursor: pointer;
+            font-weight: normal;
+            font-size: 0.9rem;
+        }
+
+        .toggle-btn.active {
+            background-color: #333333;
+            color: #ffffff;
+            border-color: #333333;
+            font-weight: bold;
         }
 
         main {
             display: grid;
-            grid-template-columns: 250px 1fr 1fr;
+            grid-template-columns: 250px 1fr;
             flex: 1;
             overflow: hidden; /* Prevent body scroll, columns scroll internally */
+        }
+        
+        main.view-posts #albums-section {
+            display: none !important;
+        }
+
+        main.view-albums #posts-section {
+            display: none !important;
         }
 
         .section {
@@ -293,10 +325,14 @@
 <body>
 
     <header>
-        User Posts & Albums Viewer
+        <div>User Posts & Albums Viewer</div>
+        <div class="view-toggle">
+            <button id="toggle-posts" class="toggle-btn active" onclick="setView('posts')">Posts</button>
+            <button id="toggle-albums" class="toggle-btn" onclick="setView('albums')">Albums</button>
+        </div>
     </header>
 
-    <main>
+    <main class="view-posts">
         <!-- Users Section -->
         <div class="section">
             <div class="section-header">USERS</div>
@@ -306,7 +342,7 @@
         </div>
 
         <!-- Posts Section -->
-        <div class="section">
+        <div class="section" id="posts-section">
             <div class="section-header">POSTS</div>
             <div class="section-content" id="posts-container">
                 <!-- Posts or Default State populated here -->
@@ -314,7 +350,7 @@
         </div>
 
         <!-- Albums Section -->
-        <div class="section">
+        <div class="section" id="albums-section">
             <div class="section-header">ALBUMS</div>
             <div class="section-content" id="albums-container">
                 <!-- Albums or Default State populated here -->
@@ -554,6 +590,17 @@
                 closeModal();
             }
         });
+
+        function setView(view) {
+            document.querySelector('main').className = `view-${view}`;
+            if (view === 'posts') {
+                document.getElementById('toggle-posts').classList.add('active');
+                document.getElementById('toggle-albums').classList.remove('active');
+            } else {
+                document.getElementById('toggle-albums').classList.add('active');
+                document.getElementById('toggle-posts').classList.remove('active');
+            }
+        }
 
         // Run on load
         document.addEventListener('DOMContentLoaded', init);
