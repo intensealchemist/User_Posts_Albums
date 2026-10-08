@@ -255,6 +255,33 @@
             color: #555555;
             margin-bottom: 1.5rem;
         }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                overflow: auto; /* Allow normal scrolling */
+            }
+
+            main {
+                display: flex;
+                flex-direction: column;
+                overflow: visible;
+            }
+
+            .section {
+                border-right: none;
+                border-bottom: 4px solid #dddddd;
+                min-height: 400px; /* Give each section enough height */
+            }
+
+            .section:last-child {
+                border-bottom: none;
+            }
+
+            .section-content {
+                overflow-y: auto;
+            }
+        }
     </style>
 </head>
 <body>
