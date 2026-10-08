@@ -481,7 +481,7 @@
             const html = `
                 <div class="item-viewer">
                     <div class="item-scroll-area">
-                        <div class="album-header-label">Post ${currentPostIdx + 1}</div>
+                        <div class="album-header-label">Post ${currentPostIdx + 1} of ${userPosts.length}</div>
                         <div class="post-title">${post.title}</div>
                         <div class="post-body">${post.body.replace(/\n/g, '<br>')}</div>
                         
@@ -553,7 +553,7 @@
             const html = `
                 <div class="item-viewer">
                     <div class="item-scroll-area">
-                        <div class="album-header-label">Album ${currentAlbumIdx + 1}</div>
+                        <div class="album-header-label">Album ${currentAlbumIdx + 1} of ${userAlbums.length}</div>
                         <div class="album-thumbnail-container">
                             <div class="album-thumbnail" onclick="openModal()">
                                 [ Thumbnail ]
