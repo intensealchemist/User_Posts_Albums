@@ -88,6 +88,9 @@
             font-weight: bold;
             background-color: #f0f0f0;
             text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .section-content {
@@ -217,13 +220,6 @@
         }
 
         /* Album Content */
-        .album-header-label {
-            text-align: center;
-            color: #666;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-        }
-        
         .album-thumbnail-container {
             display: flex;
             justify-content: center;
@@ -343,7 +339,7 @@
 
         <!-- Posts Section -->
         <div class="section" id="posts-section">
-            <div class="section-header">POSTS</div>
+            <div class="section-header" id="posts-header">POSTS</div>
             <div class="section-content" id="posts-container">
                 <!-- Posts or Default State populated here -->
             </div>
@@ -351,7 +347,7 @@
 
         <!-- Albums Section -->
         <div class="section" id="albums-section">
-            <div class="section-header">ALBUMS</div>
+            <div class="section-header" id="albums-header">ALBUMS</div>
             <div class="section-content" id="albums-container">
                 <!-- Albums or Default State populated here -->
             </div>
@@ -452,6 +448,8 @@
         }
 
         function renderDefaultState() {
+            document.getElementById('posts-header').textContent = 'POSTS';
+            document.getElementById('albums-header').textContent = 'ALBUMS';
             postsContainer.innerHTML = '<div class="empty-state">Select a user<br>to view Posts</div>';
             albumsContainer.innerHTML = '<div class="empty-state">Select a user<br>to view Albums</div>';
         }
@@ -471,17 +469,19 @@
 
         // --- POSTS LOGIC ---
         function renderPost() {
+            const header = document.getElementById('posts-header');
             if (userPosts.length === 0) {
+                header.textContent = 'POSTS';
                 postsContainer.innerHTML = '<div class="empty-state">No Posts Available</div>';
                 return;
             }
             
             const post = userPosts[currentPostIdx];
+            header.textContent = `POSTS - Post ${currentPostIdx + 1} of ${userPosts.length}`;
             
             const html = `
                 <div class="item-viewer">
                     <div class="item-scroll-area">
-                        <div class="album-header-label">Post ${currentPostIdx + 1} of ${userPosts.length}</div>
                         <div class="post-title">${post.title}</div>
                         <div class="post-body">${post.body.replace(/\n/g, '<br>')}</div>
                         
@@ -543,17 +543,19 @@
 
         // --- ALBUMS LOGIC ---
         function renderAlbum() {
+            const header = document.getElementById('albums-header');
             if (userAlbums.length === 0) {
+                header.textContent = 'ALBUMS';
                 albumsContainer.innerHTML = '<div class="empty-state">No Albums Available</div>';
                 return;
             }
             
             const album = userAlbums[currentAlbumIdx];
+            header.textContent = `ALBUMS - Album ${currentAlbumIdx + 1} of ${userAlbums.length}`;
             
             const html = `
                 <div class="item-viewer">
                     <div class="item-scroll-area">
-                        <div class="album-header-label">Album ${currentAlbumIdx + 1} of ${userAlbums.length}</div>
                         <div class="album-thumbnail-container">
                             <div class="album-thumbnail" onclick="openModal()">
                                 [ Thumbnail ]
